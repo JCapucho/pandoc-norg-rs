@@ -480,6 +480,30 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 inlines.push(Inline::Strong(bold_inlines))
             }
             "link" => inlines.push(self.handle_link()),
+            "escape_sequence" => {
+                let token_id = node.language().field_id_for_name("token");
+
+                if self.cursor.goto_first_child() {
+                    loop {
+                        if self.cursor.field_id() == token_id {
+                            let text = self
+                                .cursor
+                                .node()
+                                .utf8_text(self.source.as_bytes())
+                                .expect("Invalid text")
+                                .to_string();
+
+                            inlines.push(Inline::Str(text));
+                        }
+
+                        if !self.cursor.goto_next_sibling() {
+                            break;
+                        }
+                    }
+
+                    self.cursor.goto_parent();
+                }
+            }
             kind => {
                 log::error!("Unknown segment: {:?}", kind);
             }
