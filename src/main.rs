@@ -6,6 +6,7 @@ use std::{fs, path::PathBuf};
 use tree_sitter::TreeCursor;
 
 mod meta;
+mod quote;
 
 /// Converts a neorg file to pandoc json
 #[derive(Parser, Debug)]
@@ -131,65 +132,9 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             return;
         }
 
-        loop {
-            let node = self.cursor.node();
+        let root = quote::QuoteBuilder::new(self).parse();
 
-            match node.kind() {
-                "quote1" => self.handle_quote_level(None, 1),
-                "quote2" => self.handle_quote_level(None, 2),
-                "quote3" => self.handle_quote_level(None, 3),
-                "quote4" => self.handle_quote_level(None, 4),
-                "quote5" => self.handle_quote_level(None, 5),
-                "quote6" => self.handle_quote_level(None, 6),
-                kind => eprintln!("(quote) unknown node: {:?}", kind),
-            }
-
-            if !self.cursor.goto_next_sibling() {
-                break;
-            }
-        }
-
-        self.cursor.goto_parent();
-    }
-
-    fn handle_quote_level(&mut self, blocks: Option<&mut Vec<Block>>, level: u8) {
-        if !self.cursor.goto_first_child() {
-            return;
-        }
-
-        let mut quote = Vec::new();
-
-        for _ in 1..level {
-            let mut new_quote = Vec::new();
-            new_quote.push(Block::BlockQuote(quote));
-            quote = new_quote
-        }
-
-        loop {
-            let node = self.cursor.node();
-
-            match node.kind() {
-                "quote1" => self.handle_quote_level(Some(&mut quote), 1 - level),
-                "quote2" => self.handle_quote_level(Some(&mut quote), 2 - level),
-                "quote3" => self.handle_quote_level(Some(&mut quote), 3 - level),
-                "quote4" => self.handle_quote_level(Some(&mut quote), 4 - level),
-                "quote5" => self.handle_quote_level(Some(&mut quote), 5 - level),
-                "quote6" => self.handle_quote_level(Some(&mut quote), 6 - level),
-
-                "quote1_prefix" | "quote2_prefix" | "quote3_prefix" | "quote4_prefix"
-                | "quote5_prefix" | "quote6_prefix" => {}
-
-                "paragraph" => self.handle_paragraph(Some(&mut quote)),
-
-                kind => eprintln!("(quote) unknown node: {:?}", kind),
-            }
-
-            if !self.cursor.goto_next_sibling() {
-                break;
-            }
-        }
-
-        self.add_block(blocks, Block::BlockQuote(quote));
+        self.document.blocks.push(Block::BlockQuote(root));
 
         self.cursor.goto_parent();
     }
