@@ -499,6 +499,28 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
                 inlines.push(Inline::Strong(bold_inlines))
             }
+            "underline" => {
+                let mut underline_inlines = Vec::new();
+
+                if self.cursor.goto_first_child() {
+                    loop {
+                        let node = self.cursor.node();
+
+                        match node.kind() {
+                            "_open" | "_close" => {}
+                            _ => self.handle_segment(&mut underline_inlines),
+                        }
+
+                        if !self.cursor.goto_next_sibling() {
+                            break;
+                        }
+                    }
+
+                    self.cursor.goto_parent();
+                }
+
+                inlines.push(Inline::Underline(underline_inlines))
+            }
             "link" => inlines.push(self.handle_link()),
             "inline_math" => {
                 let text = self.get_delimited_modifier_text();
