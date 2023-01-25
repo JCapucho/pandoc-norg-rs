@@ -222,14 +222,12 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     fn handle_code_block(&mut self, parameters: &[&str]) {
         log::debug!("Parsing code block");
 
-        if parameters.len() != 1 {
+        if parameters.len() > 1 {
             log::error!(
-                "WARN: Code block expected 1 parameter received: {}",
+                "Code block expected 1 parameter received: {}",
                 parameters.len()
             );
-            if parameters.len() > 1 {
-                log::error!("WARN: Extra parameters: {:?}", &parameters[1..]);
-            }
+            log::error!("Extra parameters: {:?}", &parameters[1..]);
         }
 
         let node = self.cursor.node();
@@ -297,11 +295,11 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
         if parameters.len() != 1 {
             log::error!(
-                "WARN: Embed block expected 1 parameter received: {}",
+                "Embed block expected 1 parameter received: {}",
                 parameters.len()
             );
             if parameters.len() > 1 {
-                log::error!("WARN: Extra parameters: {:?}", &parameters[1..]);
+                log::error!("Extra parameters: {:?}", &parameters[1..]);
             }
         }
 
@@ -331,12 +329,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
         if parameters.len() != 0 {
             log::error!(
-                "WARN: Embed block expected 0 parameter received: {}",
+                "Embed block expected 0 parameter received: {}",
                 parameters.len()
             );
-            if parameters.len() > 0 {
-                log::error!("WARN: Extra parameters: {:?}", parameters);
-            }
+            log::error!("Extra parameters: {:?}", parameters);
         }
 
         let text = self
