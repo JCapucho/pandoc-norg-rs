@@ -5,6 +5,8 @@ use pandoc_types::definition::{
 use std::{fs, path::PathBuf};
 use tree_sitter::TreeCursor;
 
+mod meta;
+
 /// Converts a neorg file to pandoc json
 #[derive(Parser, Debug)]
 struct Args {
@@ -217,6 +219,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     "code" => self.handle_code_block(&parameters),
                     "embed" => self.handle_embed_block(&parameters),
                     "table" => self.handle_table_block(&parameters),
+                    "document.meta" => self.handle_document_meta_block(&parameters),
                     _ => eprintln!("Unknown verbatim name '{}'", name),
                 },
 
