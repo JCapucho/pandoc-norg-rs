@@ -180,6 +180,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     "embed" => self.handle_embed_block(&parameters),
                     "table" => self.handle_table_block(&parameters),
                     "document.meta" => self.handle_document_meta_block(&parameters),
+                    "comment" => log::debug!("Parsing comment block"),
                     _ => log::error!("Unknown verbatim name '{}'", name),
                 },
 
