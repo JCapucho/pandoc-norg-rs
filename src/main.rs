@@ -454,18 +454,19 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             }
             "_line_break" => inlines.push(Inline::LineBreak),
             "verbatim" => {
-                let node = self.cursor.node();
-                let mut start = node.start_byte();
-                let mut end = node.end_byte();
+                let text = self.get_delimited_modifier_text();
+                inlines.push(Inline::Code(Attr::default(), text.to_string()))
+            }
+            "bold" => {
+                let mut bold_inlines = Vec::new();
 
                 if self.cursor.goto_first_child() {
                     loop {
                         let node = self.cursor.node();
 
                         match node.kind() {
-                            "_open" => start = self.cursor.node().end_byte(),
-                            "_close" => end = self.cursor.node().start_byte(),
-                            _ => {}
+                            "_open" | "_close" => {}
+                            _ => self.handle_segment(&mut bold_inlines),
                         }
 
                         if !self.cursor.goto_next_sibling() {
@@ -476,12 +477,37 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     self.cursor.goto_parent();
                 }
 
-                let text = &self.source[start..end];
-                inlines.push(Inline::Code(Attr::default(), text.to_string()))
+                inlines.push(Inline::Strong(bold_inlines))
             }
             kind => {
                 log::error!("Unknown segment: {:?}", kind);
             }
         }
+    }
+
+    fn get_delimited_modifier_text(&mut self) -> &str {
+        let node = self.cursor.node();
+        let mut start = node.start_byte();
+        let mut end = node.end_byte();
+
+        if self.cursor.goto_first_child() {
+            loop {
+                let node = self.cursor.node();
+
+                match node.kind() {
+                    "_open" => start = self.cursor.node().end_byte(),
+                    "_close" => end = self.cursor.node().start_byte(),
+                    _ => {}
+                }
+
+                if !self.cursor.goto_next_sibling() {
+                    break;
+                }
+            }
+
+            self.cursor.goto_parent();
+        }
+
+        &self.source[start..end]
     }
 }
