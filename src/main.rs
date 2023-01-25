@@ -479,6 +479,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
                 inlines.push(Inline::Strong(bold_inlines))
             }
+            "link" => inlines.push(self.handle_link()),
             kind => {
                 log::error!("Unknown segment: {:?}", kind);
             }
@@ -509,5 +510,75 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         }
 
         &self.source[start..end]
+    }
+
+    fn handle_link(&mut self) -> Inline {
+        let mut text_inlines = Vec::new();
+        let mut target = Target {
+            url: String::new(),
+            title: String::new(),
+        };
+
+        if self.cursor.goto_first_child() {
+            loop {
+                let node = self.cursor.node();
+
+                match node.kind() {
+                    "link_description" => self.handle_link_description(&mut text_inlines),
+                    "link_location" => {
+                        match node.child_by_field_name("type").map(|node| node.kind()) {
+                            Some("link_target_url") => {}
+                            Some(ty) => log::error!("Unknown link type: {}", ty),
+                            None => log::error!("Link with no type"),
+                        }
+
+                        if let Some(text_node) = node.child_by_field_name("text") {
+                            target.url = text_node
+                                .utf8_text(self.source.as_bytes())
+                                .expect("Invalid text")
+                                .to_string();
+                        }
+                    }
+                    link_child => log::error!("Unknown link child: {}", link_child),
+                }
+
+                if !self.cursor.goto_next_sibling() {
+                    break;
+                }
+            }
+
+            self.cursor.goto_parent();
+        }
+
+        Inline::Link(Attr::default(), text_inlines, target)
+    }
+
+    fn handle_link_description(&mut self, inlines: &mut Vec<Inline>) {
+        let node = self.cursor.node();
+
+        let text_id = node.language().field_id_for_name("text");
+
+        if self.cursor.goto_first_child() {
+            loop {
+                if self.cursor.field_id() == text_id {
+                    if self.cursor.goto_first_child() {
+                        loop {
+                            self.handle_segment(inlines);
+
+                            if !self.cursor.goto_next_sibling() {
+                                break;
+                            }
+                        }
+
+                        self.cursor.goto_parent();
+                    }
+                }
+
+                if !self.cursor.goto_next_sibling() {
+                    break;
+                }
+            }
+            self.cursor.goto_parent();
+        }
     }
 }
