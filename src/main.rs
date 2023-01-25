@@ -1,6 +1,6 @@
 use clap::Parser;
 use pandoc_types::definition::{
-    Attr, Block, Cell, ColSpec, Inline, Pandoc, Row, Table, TableBody, TableHead, Target,
+    Attr, Block, Cell, ColSpec, Inline, MathType, Pandoc, Row, Table, TableBody, TableHead, Target,
 };
 use std::{fs, path::PathBuf};
 use tree_sitter::TreeCursor;
@@ -476,6 +476,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 inlines.push(Inline::Strong(bold_inlines))
             }
             "link" => inlines.push(self.handle_link()),
+            "inline_math" => {
+                let text = self.get_delimited_modifier_text();
+                inlines.push(Inline::Math(MathType::InlineMath, text.to_string()))
+            }
             "escape_sequence" => {
                 let token_id = node.language().field_id_for_name("token");
 
