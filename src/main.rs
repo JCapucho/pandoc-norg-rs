@@ -180,6 +180,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     "embed" => self.handle_embed_block(&parameters),
                     "table" => self.handle_table_block(&parameters),
                     "document.meta" => self.handle_document_meta_block(&parameters),
+                    "math" => self.handle_math_block(&parameters),
                     "comment" => log::debug!("Parsing comment block"),
                     _ => log::error!("Unknown verbatim name '{}'", name),
                 },
@@ -387,6 +388,29 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             }],
             ..Default::default()
         }));
+    }
+
+    fn handle_math_block(&mut self, parameters: &[&str]) {
+        log::debug!("Parsing math block");
+
+        if parameters.len() != 0 {
+            log::error!(
+                "Math block expected 0 parameter received: {}",
+                parameters.len()
+            );
+            log::error!("Extra parameters: {:?}", parameters);
+        }
+
+        let text = self
+            .cursor
+            .node()
+            .utf8_text(self.source.as_bytes())
+            .expect("Invalid text");
+
+        self.document.blocks.push(Block::Para(vec![Inline::Math(
+            MathType::DisplayMath,
+            text.to_string(),
+        )]));
     }
 
     fn handle_paragraph(&mut self, blocks: Option<&mut Vec<Block>>) {
