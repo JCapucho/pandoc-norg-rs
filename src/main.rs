@@ -427,6 +427,32 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 }
             }
             "_line_break" => inlines.push(Inline::LineBreak),
+            "verbatim" => {
+                let node = self.cursor.node();
+                let mut start = node.start_byte();
+                let mut end = node.end_byte();
+
+                if self.cursor.goto_first_child() {
+                    loop {
+                        let node = self.cursor.node();
+
+                        match node.kind() {
+                            "_open" => start = self.cursor.node().end_byte(),
+                            "_close" => end = self.cursor.node().start_byte(),
+                            _ => {}
+                        }
+
+                        if !self.cursor.goto_next_sibling() {
+                            break;
+                        }
+                    }
+
+                    self.cursor.goto_parent();
+                }
+
+                let text = &self.source[start..end];
+                inlines.push(Inline::Code(Attr::default(), text.to_string()))
+            }
             kind => {
                 eprintln!("Unknown segment: {:?}", kind);
             }
