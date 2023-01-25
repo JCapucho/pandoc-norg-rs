@@ -28,7 +28,7 @@ impl<'a, 'builder, 'tree> QuoteBuilder<'a, 'builder, 'tree> {
                 "quote4" => self.handle_quote_level(3),
                 "quote5" => self.handle_quote_level(4),
                 "quote6" => self.handle_quote_level(5),
-                kind => eprintln!("(quote) unknown node: {:?}", kind),
+                kind => log::error!("(quote) unknown node: {:?}", kind),
             }
 
             if !self.builder.cursor.goto_next_sibling() {
@@ -79,7 +79,7 @@ impl<'a, 'builder, 'tree> QuoteBuilder<'a, 'builder, 'tree> {
                     self.builder.handle_paragraph(Some(&mut self.blocks[level]));
                 }
 
-                kind => eprintln!("(quote) unknown node: {:?}", kind),
+                kind => log::error!("(quote) unknown node: {:?}", kind),
             }
 
             if !self.builder.cursor.goto_next_sibling() {

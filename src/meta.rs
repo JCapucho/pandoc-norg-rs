@@ -5,12 +5,12 @@ use std::collections::HashMap;
 impl<'builder, 'tree> Builder<'builder, 'tree> {
     pub(crate) fn handle_document_meta_block(&mut self, parameters: &[&str]) {
         if parameters.len() != 0 {
-            eprintln!(
+            log::error!(
                 "WARN: Embed block expected 0 parameter received: {}",
                 parameters.len()
             );
             if parameters.len() > 0 {
-                eprintln!("WARN: Extra parameters: {:?}", parameters);
+                log::error!("WARN: Extra parameters: {:?}", parameters);
             }
         }
 

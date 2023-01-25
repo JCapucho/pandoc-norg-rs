@@ -17,6 +17,11 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+    let mut builder = env_logger::Builder::new();
+    builder.filter_level(log::LevelFilter::Info);
+    builder.parse_default_env();
+    builder.init();
+
     let file_contents = fs::read_to_string(args.file).expect("Failed to open neorg file");
 
     let mut parser = tree_sitter::Parser::new();
@@ -59,6 +64,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     fn handle_node(&mut self) {
         let node = self.cursor.node();
 
+        log::trace!("Found node '{}'", node.kind());
+
         match node.kind() {
             "document" => self.handle_document(),
             "heading1" => self.handle_heading(1),
@@ -72,12 +79,14 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             "paragraph" => self.handle_paragraph(None),
             "ranged_verbatim_tag" => self.handle_verbatim(),
             kind => {
-                eprintln!("Unknown node: {:?}", kind)
+                log::error!("Unknown node: {:?}", kind)
             }
         }
     }
 
     fn handle_document(&mut self) {
+        log::debug!("Parsing document");
+
         if !self.cursor.goto_first_child() {
             return;
         }
@@ -94,6 +103,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_heading(&mut self, level: i32) {
+        log::debug!("Parsing heading (level: {})", level);
+
         let node = self.cursor.node();
 
         let title_id = node.language().field_id_for_name("title");
@@ -128,6 +139,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_quote(&mut self) {
+        log::debug!("Parsing quote");
+
         if !self.cursor.goto_first_child() {
             return;
         }
@@ -140,6 +153,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_verbatim(&mut self) {
+        log::debug!("Parsing verbatim");
+
         if !self.cursor.goto_first_child() {
             return;
         }
@@ -165,10 +180,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     "embed" => self.handle_embed_block(&parameters),
                     "table" => self.handle_table_block(&parameters),
                     "document.meta" => self.handle_document_meta_block(&parameters),
-                    _ => eprintln!("Unknown verbatim name '{}'", name),
+                    _ => log::error!("Unknown verbatim name '{}'", name),
                 },
 
-                kind => eprintln!("(verbatim) unknown node: {:?}", kind),
+                kind => log::error!("(verbatim) unknown node: {:?}", kind),
             }
 
             if !self.cursor.goto_next_sibling() {
@@ -204,13 +219,15 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_code_block(&mut self, parameters: &[&str]) {
+        log::debug!("Parsing code block");
+
         if parameters.len() != 1 {
-            eprintln!(
+            log::error!(
                 "WARN: Code block expected 1 parameter received: {}",
                 parameters.len()
             );
             if parameters.len() > 1 {
-                eprintln!("WARN: Extra parameters: {:?}", &parameters[1..]);
+                log::error!("WARN: Extra parameters: {:?}", &parameters[1..]);
             }
         }
 
@@ -275,13 +292,15 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_embed_block(&mut self, parameters: &[&str]) {
+        log::debug!("Parsing embed block");
+
         if parameters.len() != 1 {
-            eprintln!(
+            log::error!(
                 "WARN: Embed block expected 1 parameter received: {}",
                 parameters.len()
             );
             if parameters.len() > 1 {
-                eprintln!("WARN: Extra parameters: {:?}", &parameters[1..]);
+                log::error!("WARN: Extra parameters: {:?}", &parameters[1..]);
             }
         }
 
@@ -301,19 +320,21 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 let inlines = vec![Inline::Image(attr, Vec::new(), target)];
                 self.document.blocks.push(Block::Plain(inlines));
             }
-            Some(kind) => eprintln!("Unknown embed type: {}", kind),
+            Some(kind) => log::error!("Unknown embed type: {}", kind),
             None => {}
         }
     }
 
     fn handle_table_block(&mut self, parameters: &[&str]) {
+        log::debug!("Parsing table");
+
         if parameters.len() != 0 {
-            eprintln!(
+            log::error!(
                 "WARN: Embed block expected 0 parameter received: {}",
                 parameters.len()
             );
             if parameters.len() > 0 {
-                eprintln!("WARN: Extra parameters: {:?}", parameters);
+                log::error!("WARN: Extra parameters: {:?}", parameters);
             }
         }
 
@@ -372,6 +393,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_paragraph(&mut self, blocks: Option<&mut Vec<Block>>) {
+        log::debug!("Parsing paragraph");
+
         if !self.cursor.goto_first_child() {
             return;
         }
@@ -393,6 +416,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
     fn handle_segment(&mut self, inlines: &mut Vec<Inline>) {
         let node = self.cursor.node();
+
+        log::trace!("Parsing segment '{}'", node.kind());
 
         match node.kind() {
             "paragraph_segment" => {
@@ -423,7 +448,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
                 match text {
                     "~" => {}
-                    modifier => eprintln!("Unknown trailing modifier {}", modifier),
+                    modifier => log::error!("Unknown trailing modifier {}", modifier),
                 }
             }
             "_line_break" => inlines.push(Inline::LineBreak),
@@ -454,7 +479,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 inlines.push(Inline::Code(Attr::default(), text.to_string()))
             }
             kind => {
-                eprintln!("Unknown segment: {:?}", kind);
+                log::error!("Unknown segment: {:?}", kind);
             }
         }
     }
