@@ -32,57 +32,6 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 }
             }
             "_line_break" => inlines.push(Inline::LineBreak),
-            "verbatim" => {
-                let text = self.get_delimited_modifier_text();
-                inlines.push(Inline::Code(Attr::default(), text.to_string()))
-            }
-            "bold" => {
-                let mut bold_inlines = Vec::new();
-
-                self.visit_children(|this| {
-                    let node = this.cursor.node();
-
-                    match node.kind() {
-                        "_open" | "_close" => {}
-                        _ => this.handle_segment(&mut bold_inlines),
-                    }
-                });
-
-                inlines.push(Inline::Strong(bold_inlines))
-            }
-            "underline" => {
-                let mut underline_inlines = Vec::new();
-
-                self.visit_children(|this| {
-                    let node = this.cursor.node();
-
-                    match node.kind() {
-                        "_open" | "_close" => {}
-                        _ => this.handle_segment(&mut underline_inlines),
-                    }
-                });
-
-                inlines.push(Inline::Underline(underline_inlines))
-            }
-            "italic" => {
-                let mut italic_inlines = Vec::new();
-
-                self.visit_children(|this| {
-                    let node = this.cursor.node();
-
-                    match node.kind() {
-                        "_open" | "_close" => {}
-                        _ => this.handle_segment(&mut italic_inlines),
-                    }
-                });
-
-                inlines.push(Inline::Emph(italic_inlines))
-            }
-            "link" => inlines.push(self.handle_link()),
-            "inline_math" => {
-                let text = self.get_delimited_modifier_text();
-                inlines.push(Inline::Math(MathType::InlineMath, text.to_string()))
-            }
             "escape_sequence" => {
                 let token_id = node.language().field_id_for_name("token");
 
@@ -101,10 +50,45 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     inlines.push(Inline::Str(text));
                 });
             }
+            "link" => inlines.push(self.handle_link()),
+            // Attached modifiers
+            "bold" => inlines.push(Inline::Strong(self.handle_attached_modifier_content())),
+            "underline" => inlines.push(Inline::Underline(self.handle_attached_modifier_content())),
+            "italic" => inlines.push(Inline::Emph(self.handle_attached_modifier_content())),
+            "strikethrough" => {
+                inlines.push(Inline::Strikeout(self.handle_attached_modifier_content()))
+            }
+            "superscript" => {
+                inlines.push(Inline::Superscript(self.handle_attached_modifier_content()))
+            }
+            "subscript" => inlines.push(Inline::Subscript(self.handle_attached_modifier_content())),
+            "verbatim" => {
+                let text = self.get_delimited_modifier_text();
+                inlines.push(Inline::Code(Attr::default(), text.to_string()))
+            }
+            "inline_math" => {
+                let text = self.get_delimited_modifier_text();
+                inlines.push(Inline::Math(MathType::InlineMath, text.to_string()))
+            }
             kind => {
                 log::error!("Unknown segment: {:?}", kind);
             }
         }
+    }
+
+    fn handle_attached_modifier_content(&mut self) -> Vec<Inline> {
+        let mut inlines = Vec::new();
+
+        self.visit_children(|this| {
+            let node = this.cursor.node();
+
+            match node.kind() {
+                "_open" | "_close" | "free_form_open" | "free_form_close" => {}
+                _ => this.handle_segment(&mut inlines),
+            }
+        });
+
+        inlines
     }
 
     fn get_delimited_modifier_text(&mut self) -> &str {
@@ -118,7 +102,9 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             match node.kind() {
                 "_open" => start = this.cursor.node().end_byte(),
                 "_close" => end = this.cursor.node().start_byte(),
-                _ => {}
+                "free_form_open" => start = this.cursor.node().end_byte(),
+                "free_form_close" => end = this.cursor.node().start_byte(),
+                _ => log::trace!("Node '{}' inside verbatim", node.kind()),
             }
         });
 
