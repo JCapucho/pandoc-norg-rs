@@ -189,16 +189,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b7820b9daea5457c9f21c69448905d723fbd21136ccf521748f23fd49e723ee"
 
 [[package]]
+name = "pandoc-norg-converter"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "pandoc_types",
+ "tree-sitter",
+ "tree-sitter-norg",
+]
+
+[[package]]
 name = "pandoc-norg-rs"
 version = "0.1.0"
 dependencies = [
  "clap",
  "env_logger",
  "log",
- "pandoc_types",
+ "pandoc-norg-converter",
  "serde_json",
- "tree-sitter",
- "tree-sitter-norg",
 ]
 
 [[package]]

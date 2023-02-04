@@ -4,14 +4,12 @@ use std::collections::HashMap;
 
 impl<'builder, 'tree> Builder<'builder, 'tree> {
     pub(crate) fn handle_document_meta_block(&mut self, parameters: &[&str]) {
-        if parameters.len() != 0 {
+        if !parameters.is_empty() {
             log::error!(
                 "WARN: Embed block expected 0 parameter received: {}",
                 parameters.len()
             );
-            if parameters.len() > 0 {
-                log::error!("WARN: Extra parameters: {:?}", parameters);
-            }
+            log::error!("WARN: Extra parameters: {:?}", parameters);
         }
 
         let text = self
@@ -55,7 +53,10 @@ fn parse_object_entry(text: &str) -> (String, MetaValue, &str) {
 
     match chars.next() {
         Some(':') => rest = chars.as_str(),
-        _ => {} // TODO: Error
+        _ => {
+            // TODO?: Error
+            log::warn!("INTERNAL: Expected colon");
+        }
     };
 
     let rest = consume_whitespace(rest);
@@ -74,7 +75,10 @@ fn parse_value(text: &str) -> (MetaValue, &str) {
 
             match chars.next() {
                 Some('}') => rest = chars.as_str(),
-                _ => {} // TODO: Error
+                _ => {
+                    // TODO?: Error
+                    log::warn!("INTERNAL: Expected closing braces");
+                }
             };
 
             (MetaValue::MetaMap(map), rest)
@@ -112,13 +116,13 @@ fn parse_string(text: &str) -> (&str, &str) {
     (str.trim(), rest)
 }
 
-fn consume_whitespace<'a>(text: &'a str) -> &'a str {
+fn consume_whitespace(text: &str) -> &str {
     let (_, rest) = consume_any(text, |c| !c.is_whitespace());
     rest
 }
 
 fn consume_any(text: &str, stop: impl Fn(char) -> bool) -> (&str, &str) {
-    let pos = text.find(|c| stop(c)).unwrap_or(text.len());
+    let pos = text.find(stop).unwrap_or(text.len());
     text.split_at(pos)
 }
 
