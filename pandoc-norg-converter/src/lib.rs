@@ -2,6 +2,21 @@
 //!
 //! Start by taking a look at the [`Frontend`] documentation.
 //!
+//! # Example
+//!
+//! ```rust
+//! use pandoc_norg_converter::Frontend;
+//!
+//! let norg_source = r#"
+//! ## My amazing document
+//!
+//! This is my amazing document built with *Neorg*
+//! "#;
+//!
+//! let frontend = Frontend::new(norg_source);
+//! let document = frontend.convert();
+//! ```
+//!
 //! [neorg]: https://github.com/nvim-neorg/neorg
 //! [pandoc]: https://pandoc.org/
 

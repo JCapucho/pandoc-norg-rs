@@ -1,8 +1,11 @@
 # `pandoc-norg-rs`
 
 A pandoc json filter for parsing
-[https://github.com/nvim-neorg/neorg](neorg) documents into the pandoc
+[neorg](https://github.com/nvim-neorg/neorg) documents into the pandoc
 ast, written in Rust.
+
+Also take a look at
+[Simre1/neorg-haskell-parser](https://github.com/Simre1/neorg-haskell-parser).
 
 ## Usage
 
@@ -20,9 +23,9 @@ be found in the `pandoc-norg-converter` directory.
 
 The `pandoc-norg-rs` program is licensed under the GNU GPL 3.0 (a copy
 of the license can be found in [LICENSE](LICENSE) or at
-<https://www.gnu.org/licenses/gpl-3.0.en.html>)
+<https://www.gnu.org/licenses/gpl-3.0.en.html>).
 
 The `pandoc-norg-converter` library is licensed under the GNU LGPL 3.0
 (a copy of the license can be found in
 [pandoc-norg-converter/LICENSE](pandoc-norg-converter/LICENSE) or at
-<https://www.gnu.org/licenses/lgpl-3.0.en.html>)
+<https://www.gnu.org/licenses/lgpl-3.0.en.html>).
