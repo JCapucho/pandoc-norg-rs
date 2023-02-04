@@ -5,11 +5,11 @@ use std::collections::HashMap;
 impl<'builder, 'tree> Builder<'builder, 'tree> {
     pub(crate) fn handle_document_meta_block(&mut self, parameters: &[&str]) {
         if !parameters.is_empty() {
-            log::error!(
-                "WARN: Embed block expected 0 parameter received: {}",
+            log::warn!(
+                "Embed block expected 0 parameter received: {}",
                 parameters.len()
             );
-            log::error!("WARN: Extra parameters: {:?}", parameters);
+            log::warn!("Extra parameters: {:?}", parameters);
         }
 
         let text = self
@@ -34,12 +34,8 @@ fn parse_object_inner(mut text: &str) -> (HashMap<String, MetaValue>, &str) {
         text = consume_whitespace(rest);
         let mut chars = text.chars();
 
-        match chars.next() {
-            Some('}') | None => {
-                text = chars.as_str();
-                break;
-            }
-            _ => {} // TODO: Error
+        if let Some('}') | None = chars.next() {
+            break;
         }
     }
 
@@ -54,8 +50,10 @@ fn parse_object_entry(text: &str) -> (String, MetaValue, &str) {
     match chars.next() {
         Some(':') => rest = chars.as_str(),
         _ => {
-            // TODO?: Error
+            // TODO: Error
             log::warn!("INTERNAL: Expected colon");
+            #[cfg(test)]
+            panic!()
         }
     };
 
@@ -78,6 +76,8 @@ fn parse_value(text: &str) -> (MetaValue, &str) {
                 _ => {
                     // TODO?: Error
                     log::warn!("INTERNAL: Expected closing braces");
+                    #[cfg(test)]
+                    panic!()
                 }
             };
 
