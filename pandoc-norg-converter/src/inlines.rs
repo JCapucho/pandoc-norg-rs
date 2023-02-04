@@ -31,7 +31,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     modifier => log::error!("Unknown trailing modifier {}", modifier),
                 }
             }
-            "_line_break" => inlines.push(Inline::LineBreak),
+            "_line_break" => {}
             "escape_sequence" => {
                 let token_id = node.language().field_id_for_name("token");
 

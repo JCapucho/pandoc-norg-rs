@@ -1,13 +1,18 @@
+@comment
+To Generate the markdown:
+RUST_LOG=debug cargo r -- README.norg | pandoc -s -f json -o README.md --write=markdown-header_attributes
+@end
+
 * `pandoc-norg-rs`
 
-  A pandoc json filter for parsing {https://github.com/nvim-neorg/neorg}[neorg]~
+  A pandoc json filter for parsing {https://github.com/nvim-neorg/neorg}[neorg]
   documents into the pandoc ast, written in Rust.
 
   Also take a look at {https://github.com/Simre1/neorg-haskell-parser}[Simre1/neorg-haskell-parser].
 
 ** Usage
 
-   To use simply run `pandoc-norg-rs` with the neorg file to be converted and~
+   To use simply run `pandoc-norg-rs` with the neorg file to be converted and
    pipe the output to pandoc.
 
    @code
@@ -16,13 +21,13 @@
 
 * Library
 
-  The functionality is also provided has a rust library, the library can be found~
-  in the `pandoc-norg-converter` directory.
+  The functionality is also provided has a rust library, the library can be found
+  in the `pandoc-norg-converter` directory. 
 
 * Using with nix
 
-  A flake is also provided to be used with nix, the flake provides a devShell and an~
-  app/package to easily add the `pandoc-norg-rs` binary to a derivation or to be able~
+  A flake is also provided to be used with nix, the flake provides a devShell and an
+  app/package to easily add the `pandoc-norg-rs` binary to a derivation or to be able
   to run it directly without installing.
 
   @code
@@ -31,9 +36,9 @@
 
 * License
 
-  The `pandoc-norg-rs` program is licensed under the GNU GPL 3.0 (a copy of the~
-  license can be found in {LICENSE} or at {https://www.gnu.org/licenses/gpl-3.0.en.html}).
+  The `pandoc-norg-rs` program is licensed under the GNU GPL 3.0 (a copy of the
+  license can be found in {/ LICENSE} or at {https://www.gnu.org/licenses/gpl-3.0.en.html}).
 
-  The `pandoc-norg-converter` library is licensed under the GNU LGPL 3.0 (a copy of the~
-  license can be found in {pandoc-norg-converter/LICENSE} or at {https://www.gnu.org/licenses/lgpl-3.0.en.html}).
+  The `pandoc-norg-converter` library is licensed under the GNU LGPL 3.0 (a copy of the
+  license can be found in {/ pandoc-norg-converter/LICENSE} or at {https://www.gnu.org/licenses/lgpl-3.0.en.html}).
 
