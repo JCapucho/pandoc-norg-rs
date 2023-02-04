@@ -1,3 +1,10 @@
+//! A library to convert from [neorg] to [pandoc].
+//!
+//! Start by taking a look at the [`Frontend`] documentation.
+//!
+//! [neorg]: https://github.com/nvim-neorg/neorg
+//! [pandoc]: https://pandoc.org/
+
 use pandoc_types::definition::{
     Attr, Block, Cell, ColSpec, Inline, MathType, Pandoc, Row, Table, TableBody, TableHead, Target,
 };
@@ -7,12 +14,25 @@ mod inlines;
 mod meta;
 mod quote;
 
+/// The `Frontend` is the central structure of the converter.
+///
+/// To start using a `Frontend` first create an instance of it by calling [`Frontend::new`],
+/// this requires that you pass the neorg content to be converted as a [`&str`] that must be
+/// live as long as the `Frontend` is also live.
+///
+/// Then to convert to the pandoc representation, call [`convert`] on the `Frontend`, this will
+/// will consume the `Frontend` and output a type that can be serialized with `serde`.
+///
+/// [`&str`]: str
+/// [`convert`]: Frontend::convert
 pub struct Frontend<'tree> {
     tree: Tree,
     source: &'tree str,
 }
 
 impl<'tree> Frontend<'tree> {
+    /// Builds a new `Frontend` to convert the passed source code, this must be live as long as the
+    /// returned `Frontend` instance.
     pub fn new(source: &'tree str) -> Self {
         let mut parser = tree_sitter::Parser::new();
         parser
@@ -24,6 +44,8 @@ impl<'tree> Frontend<'tree> {
         Frontend { tree, source }
     }
 
+    /// Outputs the pandoc representation of the passed source code, consumes the `Frontend` in the
+    /// process.
     pub fn convert(self) -> Pandoc {
         let mut cursor = self.tree.walk();
 
