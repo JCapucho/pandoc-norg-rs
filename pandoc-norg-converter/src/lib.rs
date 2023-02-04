@@ -13,17 +13,19 @@
 //! This is my amazing document built with *Neorg*
 //! "#;
 //!
-//! let frontend = Frontend::new(norg_source);
-//! let document = frontend.convert();
+//! let mut frontend = Frontend::default();
+//! let document = frontend.convert(norg_source);
 //! ```
 //!
 //! [neorg]: https://github.com/nvim-neorg/neorg
 //! [pandoc]: https://pandoc.org/
 
+use std::collections::HashMap;
+
 use pandoc_types::definition::{
     Attr, Block, Cell, ColSpec, Inline, MathType, Pandoc, Row, Table, TableBody, TableHead, Target,
 };
-use tree_sitter::{Tree, TreeCursor};
+use tree_sitter::TreeCursor;
 
 mod inlines;
 mod meta;
@@ -31,48 +33,71 @@ mod quote;
 
 /// The `Frontend` is the central structure of the converter.
 ///
-/// To start using a `Frontend` first create an instance of it by calling [`Frontend::new`],
-/// this requires that you pass the neorg content to be converted as a [`&str`] that must be
-/// live as long as the `Frontend` is also live.
+/// To start using a `Frontend` first create an instance of it by calling [`Frontend::default`].
 ///
 /// Then to convert to the pandoc representation, call [`convert`] on the `Frontend`, this will
 /// will consume the `Frontend` and output a type that can be serialized with `serde`.
 ///
+/// The same `Frontend` instance should be used for many neorg documents if they all belong to the
+/// same pandoc document, for example if generating an html document by including the result of
+/// many neorg documents and stitching them together, this is because the `Frontend` keeps track of
+/// some information in order to ensure for example unique identifiers between the processed files.
+///
 /// [`&str`]: str
 /// [`convert`]: Frontend::convert
-pub struct Frontend<'tree> {
-    tree: Tree,
-    source: &'tree str,
+#[derive(Default)]
+pub struct Frontend {
+    identifiers: HashMap<String, u32>,
 }
 
-impl<'tree> Frontend<'tree> {
-    /// Builds a new `Frontend` to convert the passed source code, this must be live as long as the
-    /// returned `Frontend` instance.
-    pub fn new(source: &'tree str) -> Self {
+impl Frontend {
+    /// Converts the passed neorg source code to it's pandoc representation.
+    pub fn convert(&mut self, source: &str) -> Pandoc {
         let mut parser = tree_sitter::Parser::new();
         parser
             .set_language(tree_sitter_norg::language())
             .expect("Failed to load tree sitter grammar");
 
         let tree = parser.parse(source, None).expect("Failed to parse file");
-
-        Frontend { tree, source }
-    }
-
-    /// Outputs the pandoc representation of the passed source code, consumes the `Frontend` in the
-    /// process.
-    pub fn convert(self) -> Pandoc {
-        let mut cursor = self.tree.walk();
+        let mut cursor = tree.walk();
 
         let mut builder = Builder {
-            source: self.source,
+            source,
             cursor: &mut cursor,
             document: Pandoc::default(),
+            frontend: self,
         };
 
         builder.handle_node();
 
         builder.document
+    }
+
+    /// Generates an unique (for a given `Frontend` instance) string that's a
+    /// valid HTML5 `id` attribute value from the passed text.
+    fn generate_id(&mut self, text: &str) -> String {
+        // https://html.spec.whatwg.org/multipage/dom.html#the-id-attribute
+        //
+        // > When specified on HTML elements, the id attribute value must be unique
+        // > amongst all the IDs in the element's tree and must contain at least one
+        // > character. The value must not contain any ASCII whitespace.
+        //
+        // Also replace dots (`.`) so that they can be used for appending the counter.
+        let mut base = text.replace(' ', "-").replace('~', "-");
+
+        // If `base` was already used as an identifier a counter will be appended
+        // to it so that a new unique id can be generated
+        match self.identifiers.get_mut(&base) {
+            Some(counter) => {
+                base.push_str(&format!("~{}", *counter));
+                *counter += 1;
+            }
+            None => {
+                self.identifiers.insert(base.clone(), 0);
+            }
+        }
+
+        base
     }
 }
 
@@ -80,6 +105,7 @@ struct Builder<'builder, 'tree> {
     source: &'tree str,
     cursor: &'builder mut TreeCursor<'tree>,
     document: Pandoc,
+    frontend: &'tree mut Frontend,
 }
 
 impl<'builder, 'tree> Builder<'builder, 'tree> {
@@ -156,13 +182,19 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             if this.cursor.field_id() == content_id {
                 this.handle_node();
             } else if this.cursor.field_id() == title_id {
+                let node = this.cursor.node();
                 let mut inlines = Vec::new();
 
                 this.handle_segment(&mut inlines);
 
+                let mut attr = Attr::default();
+                attr.identifier = this
+                    .frontend
+                    .generate_id(&this.source[node.start_byte()..node.end_byte()]);
+
                 this.document
                     .blocks
-                    .push(Block::Header(level, Attr::default(), inlines));
+                    .push(Block::Header(level, attr, inlines));
             }
         });
     }

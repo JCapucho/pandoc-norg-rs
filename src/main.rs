@@ -17,8 +17,8 @@ fn main() {
 
     let file_contents = fs::read_to_string(args.file).expect("Failed to open neorg file");
 
-    let frontend = pandoc_norg_converter::Frontend::new(&file_contents);
-    let document = frontend.convert();
+    let mut frontend = pandoc_norg_converter::Frontend::default();
+    let document = frontend.convert(&file_contents);
 
     let stdout = std::io::stdout().lock();
     serde_json::to_writer(stdout, &document).expect("Failed to output to stdout");
