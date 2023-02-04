@@ -7,7 +7,7 @@
       root = ./.;
       config = common: {
         shell = {
-          packages = with common.pkgs; [pandoc rust-analyzer];
+          packages = with common.pkgs; [cargo-deny pandoc rust-analyzer];
         };
         outputs.defaults = {
           app = "pandoc-norg-rs";
