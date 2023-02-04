@@ -20,9 +20,10 @@ in the `pandoc-norg-converter` directory.
 # License
 
 The `pandoc-norg-rs` program is licensed under the GNU GPL 3.0 (a copy
-of the license can be found in [](LICENSE) or at
-[](https://www.gnu.org/licenses/gpl-3.0.en.html))
+of the license can be found in [LICENSE](LICENSE) or at
+<https://www.gnu.org/licenses/gpl-3.0.en.html>)
 
 The `pandoc-norg-converter` library is licensed under the GNU LGPL 3.0
-(a copy of the license can be found in [](pandoc-norg-converter/LICENSE)
-or at [](https://www.gnu.org/licenses/lgpl-3.0.en.html))\
+(a copy of the license can be found in
+[pandoc-norg-converter/LICENSE](pandoc-norg-converter/LICENSE) or at
+<https://www.gnu.org/licenses/lgpl-3.0.en.html>)\

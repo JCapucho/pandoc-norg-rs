@@ -126,6 +126,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_link(&mut self) -> Inline {
+        let mut has_description = false;
         let mut text_inlines = Vec::new();
         let mut target = Target {
             url: String::new(),
@@ -136,7 +137,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             let node = this.cursor.node();
 
             match node.kind() {
-                "link_description" => this.handle_link_description(&mut text_inlines),
+                "link_description" => {
+                    has_description = true;
+                    this.handle_link_description(&mut text_inlines)
+                }
                 "link_location" => {
                     match node.child_by_field_name("type").map(|node| node.kind()) {
                         Some("link_target_url") => {}
@@ -154,6 +158,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 link_child => log::error!("Unknown link child: {}", link_child),
             }
         });
+
+        if !has_description {
+            text_inlines.push(Inline::Str(target.url.clone()));
+        }
 
         Inline::Link(Attr::default(), text_inlines, target)
     }
