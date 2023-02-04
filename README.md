@@ -14,8 +14,7 @@ and pipe the output to pandoc.
 # Library
 
 The functionality is also provided has a rust library, the library can
-be found\
-in the `pandoc-norg-converter` directory.
+be found in the `pandoc-norg-converter` directory.
 
 # License
 
@@ -26,4 +25,4 @@ of the license can be found in [LICENSE](LICENSE) or at
 The `pandoc-norg-converter` library is licensed under the GNU LGPL 3.0
 (a copy of the license can be found in
 [pandoc-norg-converter/LICENSE](pandoc-norg-converter/LICENSE) or at
-<https://www.gnu.org/licenses/lgpl-3.0.en.html>)\
+<https://www.gnu.org/licenses/lgpl-3.0.en.html>)
