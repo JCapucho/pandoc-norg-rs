@@ -6,10 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.0.32", features = ["derive"] }
+clap = { version = "4.1.4", features = ["derive"] }
 pandoc_types = "0.5"
-tree-sitter = "0.20.9"
+tree-sitter = "0.20"
 tree-sitter-norg = { git = "https://github.com/JCapucho/tree-sitter-norg.git", rev = "136303707910d83cf1df4da816f8413155ba1038" }
 serde_json = "1.0"
 log = "0.4"
 env_logger = "0.10"
+
+[package.metadata.nix]
+app = true
+build = true

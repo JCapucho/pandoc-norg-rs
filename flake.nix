@@ -1,22 +1,18 @@
 {
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
+    nci.url = "github:yusdacra/nix-cargo-integration";
   };
-  outputs = {
-    nixpkgs,
-    flake-utils,
-    ...
-  }:
-    flake-utils.lib.eachDefaultSystem (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-    in {
-      devShell = with pkgs;
-        pkgs.mkShell
-        {
-          buildInputs = [
-            pandoc
-            nodePackages.serve
-          ];
+  outputs = inputs:
+    inputs.nci.lib.makeOutputs {
+      root = ./.;
+      config = common: {
+        shell = {
+          packages = with common.pkgs; [pandoc rust-analyzer];
         };
-    });
+        outputs.defaults = {
+          app = "pandoc-norg-rs";
+          package = "pandoc-norg-rs";
+        };
+      };
+    };
 }
