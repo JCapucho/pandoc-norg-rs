@@ -19,6 +19,16 @@
   The functionality is also provided has a rust library, the library can be found~
   in the `pandoc-norg-converter` directory.
 
+* Using with nix
+
+  A flake is also provided to be used with nix, the flake provides a devShell and an~
+  app/package to easily add the `pandoc-norg-rs` binary to a derivation or to be able~
+  to run it directly without installing.
+
+  @code
+  nix run github:JCapucho/pandoc-norg-rs <file> | pandoc -f json
+  @end
+
 * License
 
   The `pandoc-norg-rs` program is licensed under the GNU GPL 3.0 (a copy of the~
