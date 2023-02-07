@@ -29,17 +29,21 @@ use pandoc_types::definition::{
 use tree_sitter::TreeCursor;
 
 mod document;
+mod extensions;
 mod inlines;
 mod lists;
 mod meta;
 mod quote;
 
+pub use extensions::TodoSymbols;
+
 /// The `Frontend` is the central structure of the converter.
 ///
-/// To start using a `Frontend` first create an instance of it by calling [`Frontend::default`].
+/// To start using a `Frontend` first create an instance of it by calling [`Frontend::default`],
+/// this will use a default configuration, in order to use a custom [`Config`] use [`Frontend::new`].
 ///
 /// Then to convert to the pandoc representation, call [`convert`] on the `Frontend`, this will
-/// will consume the `Frontend` and output a type that can be serialized with `serde`.
+/// output a type that can be serialized with `serde`.
 ///
 /// The same `Frontend` instance should be used for many neorg documents if they all belong to the
 /// same pandoc document, for example if generating an html document by including the result of
@@ -50,10 +54,19 @@ mod quote;
 /// [`convert`]: Frontend::convert
 #[derive(Default)]
 pub struct Frontend {
+    config: Config,
     identifiers: HashMap<String, u32>,
 }
 
 impl Frontend {
+    /// Creates a new `Frontend` with the provided configuration.
+    pub fn new(config: Config) -> Self {
+        Frontend {
+            config,
+            ..Default::default()
+        }
+    }
+
     /// Converts the passed neorg source code to it's pandoc representation.
     pub fn convert(&mut self, source: &str) -> Pandoc {
         let mut parser = tree_sitter::Parser::new();
@@ -102,6 +115,17 @@ impl Frontend {
 
         base
     }
+}
+
+/// Holds the configuration used by a [`Frontend`].
+///
+/// A default configuration can be generated using the [`default`] function.
+///
+/// [`default`]: Config::default
+#[derive(Default)]
+pub struct Config {
+    /// Defines the symbols to be used for neorg's TODO status extension.
+    pub todo_symbols: TodoSymbols,
 }
 
 struct Builder<'builder, 'tree> {
@@ -170,16 +194,18 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
         let title_id = node.language().field_id_for_name("title");
         let content_id = node.language().field_id_for_name("content");
+        let state_id = node.language().field_id_for_name("state");
 
         debug_assert!(title_id.is_some());
         debug_assert!(content_id.is_some());
+        debug_assert!(state_id.is_some());
 
         self.visit_children(|this| {
             if this.cursor.field_id() == content_id {
                 this.handle_node();
             } else if this.cursor.field_id() == title_id {
                 let node = this.cursor.node();
-                let mut inlines = Vec::new();
+                let mut inlines = this.document.take_inlines_collector();
 
                 this.handle_segment(&mut inlines);
 
@@ -189,6 +215,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     .generate_id(&this.source[node.start_byte()..node.end_byte()]);
 
                 this.document.add_block(Block::Header(level, attr, inlines));
+            } else if this.cursor.field_id() == state_id {
+                this.handle_detached_ext();
             }
         });
     }
@@ -451,7 +479,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     fn handle_paragraph(&mut self, blocks: Option<&mut Vec<Block>>) {
         log::debug!("Parsing paragraph");
 
-        let mut inlines = Vec::new();
+        let mut inlines = self.document.take_inlines_collector();
 
         let has_children = self.visit_children(|this| {
             this.handle_segment(&mut inlines);

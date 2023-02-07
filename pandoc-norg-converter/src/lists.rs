@@ -103,6 +103,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
                 "paragraph" => this.handle_paragraph(Some(&mut blocks)),
 
+                "detached_modifier_extension" => this.handle_detached_ext(),
+
                 kind => log::error!("(lists) unknown node: {:?}", kind),
             }
         });

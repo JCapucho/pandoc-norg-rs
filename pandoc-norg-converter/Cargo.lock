@@ -44,6 +44,7 @@ version = "0.1.0"
 dependencies = [
  "log",
  "pandoc_types",
+ "serde",
  "tree-sitter",
  "tree-sitter-norg",
 ]

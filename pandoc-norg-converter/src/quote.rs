@@ -79,6 +79,8 @@ impl<'a, 'builder, 'tree> QuoteBuilder<'a, 'builder, 'tree> {
                     self.builder.handle_paragraph(Some(&mut self.blocks[level]));
                 }
 
+                "detached_modifier_extension" => self.builder.handle_detached_ext(),
+
                 kind => log::error!("(quote) unknown node: {:?}", kind),
             }
 
