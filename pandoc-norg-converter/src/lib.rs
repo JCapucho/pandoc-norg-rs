@@ -22,11 +22,13 @@
 
 use std::collections::HashMap;
 
+use document::DocumentBuilder;
 use pandoc_types::definition::{
     Attr, Block, Cell, ColSpec, Inline, MathType, Pandoc, Row, Table, TableBody, TableHead, Target,
 };
 use tree_sitter::TreeCursor;
 
+mod document;
 mod inlines;
 mod lists;
 mod meta;
@@ -65,13 +67,13 @@ impl Frontend {
         let mut builder = Builder {
             source,
             cursor: &mut cursor,
-            document: Pandoc::default(),
+            document: DocumentBuilder::default(),
             frontend: self,
         };
 
         builder.handle_node();
 
-        builder.document
+        builder.document.build()
     }
 
     /// Generates an unique (for a given `Frontend` instance) string that's a
@@ -105,19 +107,11 @@ impl Frontend {
 struct Builder<'builder, 'tree> {
     source: &'tree str,
     cursor: &'builder mut TreeCursor<'tree>,
-    document: Pandoc,
+    document: DocumentBuilder,
     frontend: &'tree mut Frontend,
 }
 
 impl<'builder, 'tree> Builder<'builder, 'tree> {
-    fn add_block(&mut self, blocks: Option<&mut Vec<Block>>, block: Block) {
-        if let Some(blocks) = blocks {
-            blocks.push(block);
-        } else {
-            self.document.blocks.push(block);
-        }
-    }
-
     fn handle_node(&mut self) {
         let node = self.cursor.node();
 
@@ -194,9 +188,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     .frontend
                     .generate_id(&this.source[node.start_byte()..node.end_byte()]);
 
-                this.document
-                    .blocks
-                    .push(Block::Header(level, attr, inlines));
+                this.document.add_block(Block::Header(level, attr, inlines));
             }
         });
     }
@@ -210,7 +202,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
         let root = quote::QuoteBuilder::new(self).parse();
 
-        self.document.blocks.push(Block::BlockQuote(root));
+        self.document.add_block(Block::BlockQuote(root));
 
         self.cursor.goto_parent();
     }
@@ -331,7 +323,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             classes: parameters.iter().map(ToString::to_string).collect(),
             ..Default::default()
         };
-        self.document.blocks.push(Block::CodeBlock(attr, content))
+        self.document.add_block(Block::CodeBlock(attr, content))
     }
 
     fn handle_embed_block(&mut self, parameters: &[&str]) {
@@ -361,7 +353,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     url: text.to_string(),
                 };
                 let inlines = vec![Inline::Image(attr, Vec::new(), target)];
-                self.document.blocks.push(Block::Plain(inlines));
+                self.document.add_block(Block::Plain(inlines));
             }
             Some(kind) => log::error!("Unknown embed type: {}", kind),
             None => {}
@@ -419,7 +411,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             rows.push(parse_row(line))
         }
 
-        self.document.blocks.push(Block::Table(Table {
+        self.document.add_block(Block::Table(Table {
             colspecs: vec![ColSpec::default(); cols],
             head: TableHead {
                 rows: head,
@@ -450,7 +442,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             .utf8_text(self.source.as_bytes())
             .expect("Invalid text");
 
-        self.document.blocks.push(Block::Para(vec![Inline::Math(
+        self.document.add_block(Block::Para(vec![Inline::Math(
             MathType::DisplayMath,
             text.to_string(),
         )]));
@@ -466,7 +458,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         });
 
         if has_children {
-            self.add_block(blocks, Block::Para(inlines));
+            self.document.add_block_scoped(blocks, Block::Para(inlines));
         }
     }
 }

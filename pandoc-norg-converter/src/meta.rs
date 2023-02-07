@@ -19,7 +19,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             .expect("Invalid text");
 
         let (meta, _) = parse_object_inner(text);
-        self.document.meta.extend(meta);
+        self.document.extend_meta(meta);
     }
 }
 

@@ -18,7 +18,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
         loop {
             let (list, exit) = self.build_lists_level(0);
-            self.document.blocks.push(list);
+            self.document.add_block(list);
 
             if let ExitCondition::EndOfNodes = exit {
                 break;
