@@ -1,6 +1,6 @@
 @comment
 To Generate the markdown:
-RUST_LOG=debug cargo r -- README.norg | pandoc -s -f json -o README.md --write=markdown-header_attributes
+cargo r -- README.norg | pandoc -s -f json -o README.md --write=gfm
 @end
 
 * `pandoc-norg-rs`
@@ -33,6 +33,67 @@ RUST_LOG=debug cargo r -- README.norg | pandoc -s -f json -o README.md --write=m
   @code
   nix run github:JCapucho/pandoc-norg-rs <file> | pandoc -f json
   @end
+
+* Supported syntax
+
+  - Attached modifiers
+  -- (x) *Bold*
+  -- (x) _Underline_
+  -- (x) -Strike-trough-
+  -- ( ) Spoiler
+  -- (x) ^Superscript^
+  -- (x) ,Subscript,
+  -- (x) `Inline code`
+  -- ( ) Null modifier
+  -- (x) $\text{Inline math}$
+  -- ( ) Variable
+  -- (x) Free-form attached modifiers
+  -- ( ) Link modifier
+  -- ( ) Attached modifier extensions
+  -- ( ) Inline comment
+  - Detached modifiers
+  -- (x) Headings
+  -- (x) Unordered lists
+  -- ( ) Ordered lists
+  -- (x) Quotes
+  -- ( ) Attributes
+  -- ( ) Definitions
+  -- ( ) Footnotes
+  -- ( ) Table cells (The old `@table` syntax is implemented)
+  -- ( ) Delimiting modifiers
+  -- ( ) Horizontal rule
+  -- ( ) Detached modifier extensions
+  --- (x) TODO status extension
+  -- Detached modifier suffix
+  --- ( ) Slide
+  --- ( ) Indent segment
+  -- Tags
+  --- ( ) Macro tags
+  --- (x) Comment ranged tag
+  --- ( ) Example tag
+  --- ( ) Details tag
+  --- ( ) Group tag
+  --- (x) Code block
+  --- ( ) Carryover tags
+  --- ( ) Infirm tag
+  --- ( ) Image tag
+  --- (x) Embed tag
+  --- (x) math tag
+  - Linkables
+  -- Link location
+  --- ( ) File Location
+  --- ( ) Line number
+  --- (x) Url
+  --- ( ) Detached Modifier
+  --- ( ) Magic Char
+  --- (x) File linkable
+  --- ( ) Timestamps
+  --- ( ) Wiki links
+  --- ( ) Scoping
+  -- (x) Link Description
+  -- ( ) Anchors
+  -- ( ) Inline Linkables
+  - (x) Object continuation
 
 * License
 

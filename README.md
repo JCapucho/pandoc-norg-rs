@@ -27,6 +27,124 @@ a derivation or to be able to run it directly without installing.
 
     nix run github:JCapucho/pandoc-norg-rs <file> | pandoc -f json
 
+# Supported syntax
+
+- Attached modifiers
+
+  - ✅ **Bold**
+
+  - ✅ <u>Underline</u>
+
+  - ✅ ~~Strike-trough~~
+
+  - ⬜ Spoiler
+
+  - ✅ <sup>Superscript</sup>
+
+  - ✅ <sub>Subscript</sub>
+
+  - ✅ `Inline code`
+
+  - ⬜ Null modifier
+
+  - ✅ $\text{Inline math}$
+
+  - ⬜ Variable
+
+  - ✅ Free-form attached modifiers
+
+  - ⬜ Link modifier
+
+  - ⬜ Attached modifier extensions
+
+  - ⬜ Inline comment
+
+- Detached modifiers
+
+  - ✅ Headings
+
+  - ✅ Unordered lists
+
+  - ⬜ Ordered lists
+
+  - ✅ Quotes
+
+  - ⬜ Attributes
+
+  - ⬜ Definitions
+
+  - ⬜ Footnotes
+
+  - ⬜ Table cells (The old `@table` syntax is implemented)
+
+  - ⬜ Delimiting modifiers
+
+  - ⬜ Horizontal rule
+
+  - ⬜ Detached modifier extensions
+
+    - ✅ TODO status extension
+
+  - Detached modifier suffix
+
+    - ⬜ Slide
+
+    - ⬜ Indent segment
+
+  - Tags
+
+    - ⬜ Macro tags
+
+    - ✅ Comment ranged tag
+
+    - ⬜ Example tag
+
+    - ⬜ Details tag
+
+    - ⬜ Group tag
+
+    - ✅ Code block
+
+    - ⬜ Carryover tags
+
+    - ⬜ Infirm tag
+
+    - ⬜ Image tag
+
+    - ✅ Embed tag
+
+    - ✅ math tag
+
+- Linkables
+
+  - Link location
+
+    - ⬜ File Location
+
+    - ⬜ Line number
+
+    - ✅ Url
+
+    - ⬜ Detached Modifier
+
+    - ⬜ Magic Char
+
+    - ✅ File linkable
+
+    - ⬜ Timestamps
+
+    - ⬜ Wiki links
+
+    - ⬜ Scoping
+
+  - ✅ Link Description
+
+  - ⬜ Anchors
+
+  - ⬜ Inline Linkables
+
+- ✅ Object continuation
+
 # License
 
 The `pandoc-norg-rs` program is licensed under the GNU GPL 3.0 (a copy
