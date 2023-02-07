@@ -28,6 +28,7 @@ use pandoc_types::definition::{
 use tree_sitter::TreeCursor;
 
 mod inlines;
+mod lists;
 mod meta;
 mod quote;
 
@@ -134,6 +135,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             "_paragraph_break" => {}
             "paragraph" => self.handle_paragraph(None),
             "ranged_verbatim_tag" => self.handle_verbatim(),
+            "generic_list" => self.handle_lists(),
             kind => {
                 log::error!("Unknown node: {:?}", kind)
             }

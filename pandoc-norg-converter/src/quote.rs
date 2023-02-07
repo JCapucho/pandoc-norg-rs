@@ -55,7 +55,7 @@ impl<'a, 'builder, 'tree> QuoteBuilder<'a, 'builder, 'tree> {
         self.last_level = level;
     }
 
-    pub fn handle_quote_level(&mut self, level: usize) {
+    fn handle_quote_level(&mut self, level: usize) {
         if !self.builder.cursor.goto_first_child() {
             return;
         }
