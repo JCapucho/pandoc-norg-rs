@@ -54,7 +54,7 @@ cargo r -- README.norg | pandoc -s -f json -o README.md --write=gfm
   - Detached modifiers
   -- (x) Headings
   -- (x) Unordered lists
-  -- ( ) Ordered lists
+  -- (x) Ordered lists
   -- (x) Quotes
   -- ( ) Attributes
   -- ( ) Definitions
