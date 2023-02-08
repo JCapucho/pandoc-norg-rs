@@ -2,6 +2,9 @@ use crate::Builder;
 use pandoc_types::definition::{Attr, Inline, MathType, Target};
 
 impl<'builder, 'tree> Builder<'builder, 'tree> {
+    /// Handles a paragraph segment element or any children of it.
+    ///
+    /// The processed items are added to the provided inlines vector and the function.
     pub fn handle_segment(&mut self, inlines: &mut Vec<Inline>) {
         let node = self.cursor.node();
 

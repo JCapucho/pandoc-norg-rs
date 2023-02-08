@@ -65,7 +65,7 @@ a derivation or to be able to run it directly without installing.
 
   - ✅ Unordered lists
 
-  - ⬜ Ordered lists
+  - ✅ Ordered lists
 
   - ✅ Quotes
 
@@ -97,7 +97,7 @@ a derivation or to be able to run it directly without installing.
 
     - ✅ Comment ranged tag
 
-    - ⬜ Example tag
+    - ✅ Example tag
 
     - ⬜ Details tag
 

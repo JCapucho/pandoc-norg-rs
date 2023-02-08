@@ -70,7 +70,7 @@ cargo r -- README.norg | pandoc -s -f json -o README.md --write=gfm
   -- Tags
   --- ( ) Macro tags
   --- (x) Comment ranged tag
-  --- ( ) Example tag
+  --- (x) Example tag
   --- ( ) Details tag
   --- ( ) Group tag
   --- (x) Code block

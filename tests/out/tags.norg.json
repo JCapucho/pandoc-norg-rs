@@ -1,0 +1,31 @@
+{
+  "pandoc-api-version": [
+    1,
+    22
+  ],
+  "meta": {},
+  "blocks": [
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "What"
+        }
+      ]
+    },
+    {
+      "t": "CodeBlock",
+      "c": [
+        [
+          "",
+          [
+            "norg"
+          ],
+          []
+        ],
+        "This is an example tag"
+      ]
+    }
+  ]
+}
