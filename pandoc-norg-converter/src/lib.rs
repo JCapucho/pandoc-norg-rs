@@ -98,8 +98,10 @@ impl Frontend {
         // > amongst all the IDs in the element's tree and must contain at least one
         // > character. The value must not contain any ASCII whitespace.
         //
-        // Also replace dots (`.`) so that they can be used for appending the counter.
-        let mut base = text.replace(' ', "-").replace('~', "-");
+        // Also replace tildes (`~`) so that they can be used for appending the counter,
+        // and other whitespace-like characthers (like tabs and newlines) because while this
+        // isn't necessary for HTML5 other formats don't handle them well
+        let mut base = text.replace([' ', '~', '\t', '\n'], "-");
 
         // If `base` was already used as an identifier a counter will be appended
         // to it so that a new unique id can be generated
