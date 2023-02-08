@@ -1,0 +1,118 @@
+{
+  "pandoc-api-version": [
+    1,
+    22
+  ],
+  "meta": {},
+  "blocks": [
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Bold"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Underline",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Underline"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strikeout",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Strike"
+            },
+            {
+              "t": "Str",
+              "c": "-trough"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Superscript",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Superscript"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Subscript",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Subscript"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Code",
+          "c": [
+            [
+              "",
+              [],
+              []
+            ],
+            "Inline code"
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Math",
+          "c": [
+            {
+              "t": "InlineMath"
+            },
+            "\\text{Inline math}"
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Code",
+          "c": [
+            [
+              "",
+              [],
+              []
+            ],
+            "Free-form attached modifiers (Notice this backtick `)"
+          ]
+        },
+        {
+          "t": "Space"
+        }
+      ]
+    }
+  ]
+}
