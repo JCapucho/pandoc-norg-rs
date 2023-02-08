@@ -211,10 +211,12 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
                 this.handle_segment(&mut inlines);
 
-                let mut attr = Attr::default();
-                attr.identifier = this
-                    .frontend
-                    .generate_id(&this.source[node.start_byte()..node.end_byte()]);
+                let attr = Attr {
+                    identifier: this
+                        .frontend
+                        .generate_id(&this.source[node.start_byte()..node.end_byte()]),
+                    ..Default::default()
+                };
 
                 this.document.add_block(Block::Header(level, attr, inlines));
             } else if this.cursor.field_id() == state_id {
