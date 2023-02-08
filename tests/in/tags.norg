@@ -1,5 +1,19 @@
-What
-
 |example
 This is an example tag
 |end
+
+@code
+Code block with no language
+@end
+
+@code rust
+fn rust_code_block() {}
+@end
+
+@embed image
+https://raw.githubusercontent.com/nvim-neorg/neorg/main/res/neorg.svg
+@end
+
+@math 
+\text{Block math}
+@end

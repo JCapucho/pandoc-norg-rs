@@ -6,15 +6,6 @@
   "meta": {},
   "blocks": [
     {
-      "t": "Para",
-      "c": [
-        {
-          "t": "Str",
-          "c": "What"
-        }
-      ]
-    },
-    {
       "t": "CodeBlock",
       "c": [
         [
@@ -25,6 +16,64 @@
           []
         ],
         "This is an example tag"
+      ]
+    },
+    {
+      "t": "CodeBlock",
+      "c": [
+        [
+          "",
+          [],
+          []
+        ],
+        "Code block with no language"
+      ]
+    },
+    {
+      "t": "CodeBlock",
+      "c": [
+        [
+          "",
+          [
+            "rust"
+          ],
+          []
+        ],
+        "fn rust_code_block() {}"
+      ]
+    },
+    {
+      "t": "Plain",
+      "c": [
+        {
+          "t": "Image",
+          "c": [
+            [
+              "",
+              [],
+              []
+            ],
+            [],
+            [
+              "https://raw.githubusercontent.com/nvim-neorg/neorg/main/res/neorg.svg\n",
+              ""
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Math",
+          "c": [
+            {
+              "t": "DisplayMath"
+            },
+            "\\text{Block math}\n"
+          ]
+        }
       ]
     }
   ]
