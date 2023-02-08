@@ -1,6 +1,5 @@
-use pandoc_types::definition::Block;
-
 use crate::Builder;
+use pandoc_types::definition::Block;
 
 /// The list type currently being processed.
 #[derive(PartialEq, Clone, Copy)]

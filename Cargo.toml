@@ -14,3 +14,7 @@ pandoc-norg-converter = { path = "pandoc-norg-converter", features = ["serde"] }
 [package.metadata.nix]
 app = true
 build = true
+
+[workspace]
+members = [".", "pandoc-norg-converter"]
+default-members = [".", "pandoc-norg-converter"]

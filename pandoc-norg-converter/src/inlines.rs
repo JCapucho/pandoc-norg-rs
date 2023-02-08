@@ -130,7 +130,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 "link_location" => {
                     match node.child_by_field_name("type").map(|node| node.kind()) {
                         Some("link_target_url") => {}
-						Some("link_target_external_file") => {}
+                        Some("link_target_external_file") => {}
                         Some(ty) => log::error!("Unknown link type: {}", ty),
                         None => log::error!("Link with no type"),
                     }
