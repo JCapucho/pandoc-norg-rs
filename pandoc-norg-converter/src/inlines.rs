@@ -100,10 +100,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             let node = this.cursor.node();
 
             match node.kind() {
-                "_open" => start = this.cursor.node().end_byte(),
-                "_close" => end = this.cursor.node().start_byte(),
-                "free_form_open" => start = this.cursor.node().end_byte(),
-                "free_form_close" => end = this.cursor.node().start_byte(),
+                "_open" => start = start.max(this.cursor.node().end_byte()),
+                "_close" => end = end.min(this.cursor.node().start_byte()),
+                "free_form_open" => start = start.max(this.cursor.node().end_byte()),
+                "free_form_close" => end = end.min(this.cursor.node().start_byte()),
                 _ => log::trace!("Node '{}' inside verbatim", node.kind()),
             }
         });
