@@ -14,5 +14,12 @@
           package = "pandoc-norg-rs";
         };
       };
+      pkgConfig = common: {
+        pandoc-norg-rs.overrides = {
+          add-test-inputs = {
+            buildInputs = [common.pkgs.pandoc];
+          };
+        };
+      };
     };
 }
