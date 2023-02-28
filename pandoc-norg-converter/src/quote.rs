@@ -1,5 +1,4 @@
-use pandoc_types::definition::Block;
-
+use crate::ir::Block;
 use crate::Builder;
 
 pub(crate) struct QuoteBuilder<'a, 'builder, 'tree> {

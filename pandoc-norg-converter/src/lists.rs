@@ -1,5 +1,5 @@
+use crate::ir::{Block, ListEntry};
 use crate::Builder;
-use pandoc_types::definition::Block;
 
 /// The list type currently being processed.
 #[derive(PartialEq, Clone, Copy)]
@@ -55,7 +55,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn build_lists_level(&mut self, level: usize) -> BuildListsResult {
-        let mut items = Vec::new();
+        let mut entries = Vec::new();
         let mut exit = ExitCondition::EndOfNodes;
         let mut list_type = ListType::Unknown;
 
@@ -102,15 +102,15 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     let mut list = res.block;
                     let diff = new_level - level;
                     for _ in 1..diff {
-                        list = list_from_type(res.list_type, vec![vec![list]])
+                        list = list_from_type(res.list_type, vec![ListEntry { blocks: vec![list] }])
                     }
-                    items.push(vec![list]);
+                    entries.push(ListEntry { blocks: vec![list] });
 
                     if res.exit != ExitCondition::EndOfNodes {
                         continue;
                     }
                 }
-                std::cmp::Ordering::Equal => items.push(self.handle_list_content(level)),
+                std::cmp::Ordering::Equal => entries.push(self.handle_list_content(level)),
                 std::cmp::Ordering::Greater => {
                     exit = ExitCondition::LevelIsHigher;
                     break;
@@ -123,13 +123,13 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         }
 
         BuildListsResult {
-            block: list_from_type(list_type, items),
+            block: list_from_type(list_type, entries),
             list_type,
             exit,
         }
     }
 
-    fn handle_list_content(&mut self, level: usize) -> Vec<Block> {
+    fn handle_list_content(&mut self, level: usize) -> ListEntry {
         let mut blocks = Vec::new();
 
         self.visit_children(|this| {
@@ -164,15 +164,15 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             }
         });
 
-        blocks
+        ListEntry { blocks }
     }
 }
 
 /// Constructs a list block from a set of items and the list type.
-fn list_from_type(list_type: ListType, items: Vec<Vec<Block>>) -> Block {
+fn list_from_type(list_type: ListType, items: Vec<ListEntry>) -> Block {
     match list_type {
         ListType::Unknown => Block::Null,
-        ListType::Ordered => Block::OrderedList(Default::default(), items),
+        ListType::Ordered => Block::OrderedList(items),
         ListType::Unordered => Block::BulletList(items),
     }
 }

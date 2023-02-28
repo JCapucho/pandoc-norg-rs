@@ -23,12 +23,15 @@
 use std::collections::HashMap;
 
 use document::DocumentBuilder;
-use pandoc_types::definition::{Attr, Block, Pandoc};
+use pandoc_types::definition::{Attr, Pandoc};
 use tree_sitter::TreeCursor;
+
+use ir::Block;
 
 mod document;
 mod extensions;
 mod inlines;
+mod ir;
 mod lists;
 mod meta;
 mod quote;
@@ -242,14 +245,22 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     fn handle_paragraph(&mut self, blocks: Option<&mut Vec<Block>>) {
         log::debug!("Parsing paragraph");
 
-        let mut inlines = self.document.take_inlines_collector();
+        let mut segments = Vec::new();
+        let mut segment = self.document.take_inlines_collector();
 
         self.visit_children(|this| {
-            this.handle_segment(&mut inlines);
+            this.handle_segment(&mut segment);
+
+            if !segment.is_empty() {
+                let mut new_segment = Vec::new();
+                std::mem::swap(&mut segment, &mut new_segment);
+                segments.push(new_segment);
+            }
         });
 
-        if !inlines.is_empty() {
-            self.document.add_block_scoped(blocks, Block::Para(inlines));
+        if !segments.is_empty() {
+            self.document
+                .add_block_scoped(blocks, Block::Paragraph(segments));
         }
     }
 }

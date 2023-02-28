@@ -1,4 +1,6 @@
-use pandoc_types::definition::{Block, Inline, MetaValue, Pandoc};
+use crate::ir::{convert_blocks_to_pandoc, convert_inlines_to_pandoc, Block, Inline};
+use pandoc_types::definition::{Block as PandocBlock, MetaValue, Pandoc};
+use std::collections::HashMap;
 
 /// Interface for building pandoc documents.
 ///
@@ -6,8 +8,10 @@ use pandoc_types::definition::{Block, Inline, MetaValue, Pandoc};
 /// their correct usage trough it's API.
 #[derive(Default)]
 pub struct DocumentBuilder {
-    document: Pandoc,
+    blocks: Vec<Block>,
+    metadata: HashMap<String, MetaValue>,
     inlines_collector: Vec<Inline>,
+    anchors: HashMap<String, String>,
 }
 
 impl DocumentBuilder {
@@ -23,7 +27,7 @@ impl DocumentBuilder {
         let sink = if let Some(blocks) = scope {
             blocks
         } else {
-            &mut self.document.blocks
+            &mut self.blocks
         };
 
         // Flush the inlines collector
@@ -43,7 +47,7 @@ impl DocumentBuilder {
     where
         I: IntoIterator<Item = (String, MetaValue)>,
     {
-        self.document.meta.extend(meta);
+        self.metadata.extend(meta);
     }
 
     /// Adds an inline to the collector.
@@ -65,14 +69,18 @@ impl DocumentBuilder {
     }
 
     /// Returns the built document.
-    pub fn build(mut self) -> Pandoc {
+    pub fn build(self) -> Pandoc {
+        let mut pandoc = Pandoc {
+            meta: self.metadata,
+            blocks: convert_blocks_to_pandoc(self.blocks, &self.anchors),
+        };
+
         // Flush the inlines collector
         if !self.inlines_collector.is_empty() {
-            let mut inlines = Vec::new();
-            std::mem::swap(&mut self.inlines_collector, &mut inlines);
-            self.document.blocks.push(Block::Plain(inlines));
+            let inlines = convert_inlines_to_pandoc(self.inlines_collector, &self.anchors);
+            pandoc.blocks.push(PandocBlock::Plain(inlines));
         }
 
-        self.document
+        pandoc
     }
 }

@@ -1,7 +1,6 @@
+use crate::ir::{Block, Cell, Inline};
 use crate::Builder;
-use pandoc_types::definition::{
-    Attr, Block, Cell, ColSpec, Inline, MathType, Row, Table, TableBody, TableHead, Target,
-};
+use pandoc_types::definition::Target;
 
 impl<'builder, 'tree> Builder<'builder, 'tree> {
     pub fn handle_ranged_tag(&mut self) {
@@ -95,11 +94,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         }
 
         let content = self.code_content();
-        let attr = Attr {
-            classes: vec![String::from("norg")],
-            ..Default::default()
-        };
-        self.document.add_block(Block::CodeBlock(attr, content))
+        self.document
+            .add_block(Block::CodeBlock(Some(String::from("norg")), content))
     }
 
     fn handle_code_block(&mut self, parameters: &[&str]) {
@@ -114,11 +110,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         }
 
         let content = self.code_content();
-        let attr = Attr {
-            classes: parameters.iter().map(ToString::to_string).collect(),
-            ..Default::default()
-        };
-        self.document.add_block(Block::CodeBlock(attr, content))
+        let language = parameters.get(0).map(ToString::to_string);
+        self.document.add_block(Block::CodeBlock(language, content))
     }
 
     fn code_content(&self) -> String {
@@ -199,13 +192,12 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
         match parameters.first().copied() {
             Some("image") => {
-                let attr = Attr::default();
                 let target = Target {
                     title: String::new(),
                     url: text.to_string(),
                 };
-                let inlines = vec![Inline::Image(attr, Vec::new(), target)];
-                self.document.add_block(Block::Plain(inlines));
+                let segment = vec![Inline::Image(target)];
+                self.document.add_block(Block::Plain(segment));
             }
             Some(kind) => log::error!("Unknown embed type: {}", kind),
             None => {}
@@ -232,49 +224,34 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         let mut cols = 0;
 
         let mut parse_row = |line: &str| {
-            let mut cells = Vec::new();
+            let mut row = Vec::new();
 
             for col in line.split('|') {
                 let content = col.trim();
-                cells.push(Cell {
-                    content: vec![Block::Plain(vec![Inline::Str(content.to_string())])],
-                    ..Default::default()
+                row.push(Cell {
+                    blocks: vec![Block::Plain(vec![Inline::Str(content.to_string())])],
                 });
             }
 
-            cols = cols.max(cells.len());
+            cols = cols.max(row.len());
 
-            Row {
-                attr: Attr::default(),
-                cells,
-            }
+            row
         };
 
         let mut head = Vec::new();
-        let mut rows = Vec::new();
+        let mut body = Vec::new();
 
         let mut lines = text.lines();
 
         if let Some(line) = lines.next() {
-            head.push(parse_row(line))
+            head = parse_row(line);
         }
 
         for line in lines {
-            rows.push(parse_row(line))
+            body.push(parse_row(line))
         }
 
-        self.document.add_block(Block::Table(Table {
-            colspecs: vec![ColSpec::default(); cols],
-            head: TableHead {
-                rows: head,
-                ..Default::default()
-            },
-            bodies: vec![TableBody {
-                body: rows,
-                ..Default::default()
-            }],
-            ..Default::default()
-        }));
+        self.document.add_block(Block::Table(cols, head, body));
     }
 
     fn handle_math_block(&mut self, parameters: &[&str]) {
@@ -294,9 +271,6 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             .utf8_text(self.source.as_bytes())
             .expect("Invalid text");
 
-        self.document.add_block(Block::Para(vec![Inline::Math(
-            MathType::DisplayMath,
-            text.to_string(),
-        )]));
+        self.document.add_block(Block::MathBlock(text.to_string()));
     }
 }

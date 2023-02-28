@@ -1,5 +1,6 @@
+use crate::ir::Inline;
 use crate::Builder;
-use pandoc_types::definition::{Attr, Inline, MathType, Target};
+use pandoc_types::definition::Target;
 
 impl<'builder, 'tree> Builder<'builder, 'tree> {
     /// Handles a paragraph segment element or any children of it.
@@ -34,7 +35,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     modifier => log::error!("Unknown trailing modifier {}", modifier),
                 }
             }
-            "_line_break" => inlines.push(Inline::Space),
+            "_line_break" => {},
             "escape_sequence" => {
                 let token_id = node.language().field_id_for_name("token");
 
@@ -67,11 +68,11 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             "subscript" => inlines.push(Inline::Subscript(self.handle_attached_modifier_content())),
             "verbatim" => {
                 let text = self.get_delimited_modifier_text();
-                inlines.push(Inline::Code(Attr::default(), text.to_string()))
+                inlines.push(Inline::Code(text.to_string()))
             }
             "inline_math" => {
                 let text = self.get_delimited_modifier_text();
-                inlines.push(Inline::Math(MathType::InlineMath, text.to_string()))
+                inlines.push(Inline::Math(text.to_string()))
             }
             kind => {
                 log::error!("Unknown segment: {:?}", kind);
@@ -153,7 +154,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             text_inlines.push(Inline::Str(target.url.clone()));
         }
 
-        Inline::Link(Attr::default(), text_inlines, target)
+        Inline::Link(text_inlines, target)
     }
 
     fn handle_link_description(&mut self, inlines: &mut Vec<Inline>) {

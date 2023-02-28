@@ -1,5 +1,5 @@
+use crate::ir::Inline;
 use crate::Builder;
-use pandoc_types::definition::Inline;
 #[cfg(serde)]
 use serde::Deserialize;
 
