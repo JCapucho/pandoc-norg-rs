@@ -209,7 +209,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
 
         if !parameters.is_empty() {
             log::error!(
-                "Embed block expected 0 parameter received: {}",
+                "Table block expected 0 parameter received: {}",
                 parameters.len()
             );
             log::error!("Extra parameters: {:?}", parameters);

@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs";
     nci.url = "github:yusdacra/nix-cargo-integration";
     nci.inputs.nixpkgs.follows = "nixpkgs";
     parts.url = "github:hercules-ci/flake-parts";
