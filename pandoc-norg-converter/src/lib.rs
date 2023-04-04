@@ -155,7 +155,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             "heading6" => self.handle_heading(6),
             "quote" => self.handle_quote(),
             "_paragraph_break" => {}
-            "paragraph" => self.handle_paragraph(None),
+            "paragraph" => self.handle_paragraph(),
             "ranged_tag" => self.handle_ranged_tag(),
             "ranged_verbatim_tag" => self.handle_verbatim(),
             "generic_list" => self.handle_lists(),
@@ -242,7 +242,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         self.cursor.goto_parent();
     }
 
-    fn handle_paragraph(&mut self, blocks: Option<&mut Vec<Block>>) {
+    fn handle_paragraph(&mut self) {
         log::debug!("Parsing paragraph");
 
         let mut segments = Vec::new();
@@ -259,8 +259,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         });
 
         if !segments.is_empty() {
-            self.document
-                .add_block_scoped(blocks, Block::Paragraph(segments));
+            self.document.add_block(Block::Paragraph(segments));
         }
     }
 }

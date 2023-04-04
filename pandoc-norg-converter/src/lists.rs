@@ -130,7 +130,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_list_content(&mut self, level: usize) -> ListEntry {
-        let mut blocks = Vec::new();
+        self.document.push_scope();
 
         self.visit_children(|this| {
             let node = this.cursor.node();
@@ -153,10 +153,11 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 "unordered_list1" | "unordered_list2" | "unordered_list3" | "unordered_list4"
                 | "unordered_list5" | "unordered_list6" | "ordered_list1" | "ordered_list2"
                 | "ordered_list3" | "ordered_list4" | "ordered_list5" | "ordered_list6" => {
-                    blocks.push(this.build_lists_level(level + 1).block)
+                    let block = this.build_lists_level(level + 1).block;
+                    this.document.add_block(block);
                 }
 
-                "paragraph" => this.handle_paragraph(Some(&mut blocks)),
+                "paragraph" => this.handle_paragraph(),
 
                 "detached_modifier_extension" => this.handle_detached_ext(),
 
@@ -164,7 +165,9 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             }
         });
 
-        ListEntry { blocks }
+        ListEntry {
+            blocks: self.document.pop_scope(),
+        }
     }
 }
 

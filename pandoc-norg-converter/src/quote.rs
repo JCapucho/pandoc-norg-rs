@@ -3,6 +3,7 @@ use crate::Builder;
 
 pub(crate) struct QuoteBuilder<'a, 'builder, 'tree> {
     builder: &'a mut Builder<'builder, 'tree>,
+    // TODO: Try to work directly with the document scopes
     blocks: [Vec<Block>; 6],
     last_level: usize,
 }
@@ -75,7 +76,11 @@ impl<'a, 'builder, 'tree> QuoteBuilder<'a, 'builder, 'tree> {
 
                 "paragraph" => {
                     self.merge_quotes(level);
-                    self.builder.handle_paragraph(Some(&mut self.blocks[level]));
+
+                    self.builder.document.push_scope();
+                    self.builder.handle_paragraph();
+                    let mut scope = self.builder.document.pop_scope();
+                    self.blocks[level].append(&mut scope);
                 }
 
                 "detached_modifier_extension" => self.builder.handle_detached_ext(),

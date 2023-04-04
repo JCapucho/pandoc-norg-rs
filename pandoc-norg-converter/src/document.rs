@@ -6,38 +6,38 @@ use std::collections::HashMap;
 ///
 /// This interface provides some extra functionality to help when building a document and ensures
 /// their correct usage trough it's API.
-#[derive(Default)]
 pub struct DocumentBuilder {
-    blocks: Vec<Block>,
+    scopes: Vec<Vec<Block>>,
     metadata: HashMap<String, MetaValue>,
     inlines_collector: Vec<Inline>,
     anchors: HashMap<String, String>,
 }
 
 impl DocumentBuilder {
-    /// Adds a new [`Block`] to the document
+    /// Adds a new [`Block`] to the current scope
     pub fn add_block(&mut self, block: Block) {
-        self.add_block_scoped(None, block);
-    }
-
-    /// Adds a new [`Block`] to the passed scope, or if it's [`None`] to the document.
-    ///
-    /// [`None`]: Option::None
-    pub fn add_block_scoped(&mut self, scope: Option<&mut Vec<Block>>, block: Block) {
-        let sink = if let Some(blocks) = scope {
-            blocks
-        } else {
-            &mut self.blocks
-        };
+        let scope = self.scopes.last_mut().expect("All scopes were popped");
 
         // Flush the inlines collector
         if !self.inlines_collector.is_empty() {
             let mut inlines = Vec::new();
             std::mem::swap(&mut self.inlines_collector, &mut inlines);
-            sink.push(Block::Plain(inlines));
+            scope.push(Block::Plain(inlines));
         }
 
-        sink.push(block);
+        scope.push(block);
+    }
+
+    /// Pushes a new scope
+    pub fn push_scope(&mut self) {
+        self.scopes.push(Vec::new());
+    }
+
+    /// Pops the current scope returning it's blocks
+    pub fn pop_scope(&mut self) -> Vec<Block> {
+        self.scopes
+            .pop()
+            .expect("Tried to pop a non existing scope")
     }
 
     /// Extends the metadata of the document with the provided values.
@@ -69,10 +69,13 @@ impl DocumentBuilder {
     }
 
     /// Returns the built document.
-    pub fn build(self) -> Pandoc {
+    pub fn build(mut self) -> Pandoc {
+        debug_assert_eq!(self.scopes.len(), 1, "Only the root scope should remain");
+        let root_scope = self.scopes.remove(0);
+
         let mut pandoc = Pandoc {
             meta: self.metadata,
-            blocks: convert_blocks_to_pandoc(self.blocks, &self.anchors),
+            blocks: convert_blocks_to_pandoc(root_scope, &self.anchors),
         };
 
         // Flush the inlines collector
@@ -82,5 +85,16 @@ impl DocumentBuilder {
         }
 
         pandoc
+    }
+}
+
+impl Default for DocumentBuilder {
+    fn default() -> Self {
+        Self {
+            scopes: vec![Vec::new()],
+            metadata: Default::default(),
+            inlines_collector: Default::default(),
+            anchors: Default::default(),
+        }
     }
 }
