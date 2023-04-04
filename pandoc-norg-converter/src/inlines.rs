@@ -35,12 +35,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     modifier => log::error!("Unknown trailing modifier {}", modifier),
                 }
             }
-            "_line_break" => {},
+            "_line_break" => {}
             "escape_sequence" => {
-                let token_id = node.language().field_id_for_name("token");
-
                 self.visit_children(|this| {
-                    if this.cursor.field_id() != token_id {
+                    if this.cursor.field_id() != this.field_ids.token {
                         return;
                     }
 
@@ -158,12 +156,8 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     }
 
     fn handle_link_description(&mut self, inlines: &mut Vec<Inline>) {
-        let node = self.cursor.node();
-
-        let text_id = node.language().field_id_for_name("text");
-
         self.visit_children(|this| {
-            if this.cursor.field_id() != text_id {
+            if this.cursor.field_id() != this.field_ids.text {
                 return;
             }
 

@@ -23,13 +23,16 @@
 use std::collections::HashMap;
 
 use document::DocumentBuilder;
+use field_ids::FieldIds;
 use pandoc_types::definition::{Attr, Pandoc};
 use tree_sitter::TreeCursor;
 
 use ir::Block;
 
+mod definitions;
 mod document;
 mod extensions;
+mod field_ids;
 mod inlines;
 mod ir;
 mod lists;
@@ -77,6 +80,7 @@ impl Frontend {
             .expect("Failed to load tree sitter grammar");
 
         let tree = parser.parse(source, None).expect("Failed to parse file");
+        let field_ids = FieldIds::new(&tree);
         let mut cursor = tree.walk();
 
         let mut builder = Builder {
@@ -84,6 +88,7 @@ impl Frontend {
             cursor: &mut cursor,
             document: DocumentBuilder::default(),
             frontend: self,
+            field_ids,
         };
 
         builder.handle_node();
@@ -137,6 +142,7 @@ struct Builder<'builder, 'tree> {
     cursor: &'builder mut TreeCursor<'tree>,
     document: DocumentBuilder,
     frontend: &'tree mut Frontend,
+    field_ids: FieldIds,
 }
 
 impl<'builder, 'tree> Builder<'builder, 'tree> {
@@ -153,12 +159,15 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             "heading4" => self.handle_heading(4),
             "heading5" => self.handle_heading(5),
             "heading6" => self.handle_heading(6),
+
             "quote" => self.handle_quote(),
             "_paragraph_break" => {}
             "paragraph" => self.handle_paragraph(),
             "ranged_tag" => self.handle_ranged_tag(),
             "ranged_verbatim_tag" => self.handle_verbatim(),
             "generic_list" => self.handle_lists(),
+
+            "definition_list" => self.handle_definition_list(),
             kind => {
                 log::error!("Unknown node: {:?}", kind)
             }
@@ -195,20 +204,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
     fn handle_heading(&mut self, level: i32) {
         log::debug!("Parsing heading (level: {})", level);
 
-        let node = self.cursor.node();
-
-        let title_id = node.language().field_id_for_name("title");
-        let content_id = node.language().field_id_for_name("content");
-        let state_id = node.language().field_id_for_name("state");
-
-        debug_assert!(title_id.is_some());
-        debug_assert!(content_id.is_some());
-        debug_assert!(state_id.is_some());
-
         self.visit_children(|this| {
-            if this.cursor.field_id() == content_id {
+            if this.cursor.field_id() == this.field_ids.content {
                 this.handle_node();
-            } else if this.cursor.field_id() == title_id {
+            } else if this.cursor.field_id() == this.field_ids.title {
                 let node = this.cursor.node();
                 let mut inlines = this.document.take_inlines_collector();
 
@@ -222,7 +221,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                 };
 
                 this.document.add_block(Block::Header(level, attr, inlines));
-            } else if this.cursor.field_id() == state_id {
+            } else if this.cursor.field_id() == this.field_ids.state {
                 this.handle_detached_ext();
             }
         });

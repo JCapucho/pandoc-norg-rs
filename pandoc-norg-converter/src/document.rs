@@ -57,6 +57,8 @@ impl DocumentBuilder {
     ///
     /// This is useful for directives which produce inlines but that are supposed to merge with the
     /// next block with inlines.
+    ///
+    /// [`take_inlines_collector`]: Self::take_inlines_collector
     pub fn push_inlines_collector(&mut self, inline: Inline) {
         self.inlines_collector.push(inline)
     }

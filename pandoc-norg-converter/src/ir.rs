@@ -105,6 +105,7 @@ pub enum Block {
 
     BulletList(Vec<ListEntry>),
     OrderedList(Vec<ListEntry>),
+    DefinitionList(Vec<(ParagraphSegment, Vec<Block>)>),
 }
 
 impl Block {
@@ -196,6 +197,20 @@ impl Block {
                     .collect();
 
                 PandocBlock::OrderedList(Default::default(), entries)
+            }
+            Block::DefinitionList(entries) => {
+                let entries = entries
+                    .into_iter()
+                    .map(|(segment, blocks)| {
+                        let inlines = convert_inlines_to_pandoc(segment, anchors);
+
+                        let blocks = convert_blocks_to_pandoc(blocks, anchors);
+
+                        (inlines, vec![blocks])
+                    })
+                    .collect();
+
+                PandocBlock::DefinitionList(entries)
             }
         }
     }

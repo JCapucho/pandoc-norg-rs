@@ -1,0 +1,324 @@
+{
+  "pandoc-api-version": [
+    1,
+    22
+  ],
+  "meta": {},
+  "blocks": [
+    {
+      "t": "DefinitionList",
+      "c": [
+        [
+          [
+            {
+              "t": "Str",
+              "c": "Term"
+            }
+          ],
+          [
+            [
+              {
+                "t": "Para",
+                "c": [
+                  {
+                    "t": "Str",
+                    "c": "The"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "definition"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "of"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "the"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "object"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "in"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "a"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "single"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "paragraph."
+                  }
+                ]
+              }
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "This"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "is"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "not"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "considered"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "part"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "of"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "definition."
+        }
+      ]
+    },
+    {
+      "t": "DefinitionList",
+      "c": [
+        [
+          [
+            {
+              "t": "Str",
+              "c": "Object"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "to"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "be"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "defined"
+            }
+          ],
+          [
+            [
+              {
+                "t": "Para",
+                "c": [
+                  {
+                    "t": "Str",
+                    "c": "Here"
+                  },
+                  {
+                    "t": "Str",
+                    "c": ","
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "I"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "can"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "place"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "any"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "number"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "of"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "paragraphs"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "or"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "other"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "format"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "objects."
+                  }
+                ]
+              },
+              {
+                "t": "Para",
+                "c": [
+                  {
+                    "t": "Str",
+                    "c": "Even"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "a"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "code"
+                  },
+                  {
+                    "t": "Space"
+                  },
+                  {
+                    "t": "Str",
+                    "c": "example"
+                  },
+                  {
+                    "t": "Str",
+                    "c": ":"
+                  }
+                ]
+              },
+              {
+                "t": "CodeBlock",
+                "c": [
+                  [
+                    "",
+                    [
+                      "lua"
+                    ],
+                    []
+                  ],
+                  "print(\"Hello world!\")"
+                ]
+              }
+            ]
+          ]
+        ]
+      ]
+    }
+  ]
+}

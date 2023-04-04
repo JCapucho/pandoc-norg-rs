@@ -24,7 +24,7 @@ enum ExitCondition {
     TypeMismatch,
 }
 
-/// The results of a call to [`Builder::build_list_level`].
+/// The results of a call to [`Builder::build_lists_level`].
 struct BuildListsResult {
     /// The built list as a block.
     block: Block,

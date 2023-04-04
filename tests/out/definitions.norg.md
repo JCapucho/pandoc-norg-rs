@@ -1,0 +1,15 @@
+Term
+
+:   The definition of the object in a single paragraph.
+
+This is not considered part of the definition.
+
+Object to be defined
+
+:   Here, I can place any number of paragraphs or other format objects.
+
+    Even a code example:
+
+    ``` lua
+    print("Hello world!")
+    ```
