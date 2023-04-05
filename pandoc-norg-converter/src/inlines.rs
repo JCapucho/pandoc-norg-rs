@@ -74,6 +74,8 @@ where
                 let text = self.get_delimited_modifier_text();
                 inlines.push(Inline::Math(text))
             }
+            // Null modifier
+            "inline_comment" => {}
             kind => {
                 log::error!("Unknown segment: {:?}", kind);
             }
