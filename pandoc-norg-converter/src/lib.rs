@@ -137,15 +137,21 @@ pub struct Config {
     pub todo_symbols: TodoSymbols,
 }
 
-struct Builder<'builder, 'tree> {
-    source: &'tree str,
-    cursor: &'builder mut TreeCursor<'tree>,
-    document: DocumentBuilder,
-    frontend: &'tree mut Frontend,
+struct Builder<'builder, 'source>
+where
+    'source: 'builder,
+{
+    source: &'source str,
+    cursor: &'builder mut TreeCursor<'source>,
+    document: DocumentBuilder<'source>,
+    frontend: &'source mut Frontend,
     field_ids: FieldIds,
 }
 
-impl<'builder, 'tree> Builder<'builder, 'tree> {
+impl<'builder, 'source> Builder<'builder, 'source>
+where
+    'source: 'builder,
+{
     fn handle_node(&mut self) {
         let node = self.cursor.node();
 

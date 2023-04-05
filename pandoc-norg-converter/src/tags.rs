@@ -2,7 +2,10 @@ use crate::ir::{Block, Cell, Inline};
 use crate::Builder;
 use pandoc_types::definition::Target;
 
-impl<'builder, 'tree> Builder<'builder, 'tree> {
+impl<'builder, 'source> Builder<'builder, 'source>
+where
+    'source: 'builder,
+{
     pub fn handle_ranged_tag(&mut self) {
         log::debug!("Parsing ranged tag");
 
@@ -68,7 +71,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         });
     }
 
-    fn handle_tag_parameters(&mut self, parameters: &mut Vec<&'tree str>) {
+    fn handle_tag_parameters(&mut self, parameters: &mut Vec<&'source str>) {
         let node = self.cursor.node();
 
         parameters.reserve(node.child_count());

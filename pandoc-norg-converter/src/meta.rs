@@ -2,7 +2,7 @@ use crate::Builder;
 use pandoc_types::definition::MetaValue;
 use std::collections::HashMap;
 
-impl<'builder, 'tree> Builder<'builder, 'tree> {
+impl<'builder, 'source> Builder<'builder, 'source> {
     pub(crate) fn handle_document_meta_block(&mut self, parameters: &[&str]) {
         if !parameters.is_empty() {
             log::warn!(

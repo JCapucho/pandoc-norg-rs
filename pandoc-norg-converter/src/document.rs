@@ -6,16 +6,16 @@ use std::collections::HashMap;
 ///
 /// This interface provides some extra functionality to help when building a document and ensures
 /// their correct usage trough it's API.
-pub struct DocumentBuilder {
-    scopes: Vec<Vec<Block>>,
+pub struct DocumentBuilder<'source> {
+    scopes: Vec<Vec<Block<'source>>>,
     metadata: HashMap<String, MetaValue>,
-    inlines_collector: Vec<Inline>,
-    anchors: HashMap<String, String>,
+    inlines_collector: Vec<Inline<'source>>,
+    anchors: HashMap<&'source str, String>,
 }
 
-impl DocumentBuilder {
+impl<'source> DocumentBuilder<'source> {
     /// Adds a new [`Block`] to the current scope
-    pub fn add_block(&mut self, block: Block) {
+    pub fn add_block(&mut self, block: Block<'source>) {
         let scope = self.scopes.last_mut().expect("All scopes were popped");
 
         // Flush the inlines collector
@@ -34,7 +34,7 @@ impl DocumentBuilder {
     }
 
     /// Pops the current scope returning it's blocks
-    pub fn pop_scope(&mut self) -> Vec<Block> {
+    pub fn pop_scope(&mut self) -> Vec<Block<'source>> {
         self.scopes
             .pop()
             .expect("Tried to pop a non existing scope")
@@ -50,6 +50,14 @@ impl DocumentBuilder {
         self.metadata.extend(meta);
     }
 
+    /// Adds a new anchor definition
+    ///
+    /// If the anchor name was already added the value is replaced
+    pub fn add_anchor(&mut self, name: &'source str, url: String) {
+        log::debug!("Registering anchor for {} (url: {})", name, url);
+        self.anchors.insert(name, url);
+    }
+
     /// Adds an inline to the collector.
     ///
     /// The collector stores inlines until either [`take_inlines_collector`] is called or a new
@@ -59,12 +67,12 @@ impl DocumentBuilder {
     /// next block with inlines.
     ///
     /// [`take_inlines_collector`]: Self::take_inlines_collector
-    pub fn push_inlines_collector(&mut self, inline: Inline) {
+    pub fn push_inlines_collector(&mut self, inline: Inline<'source>) {
         self.inlines_collector.push(inline)
     }
 
     /// Returns the contents of the inline collector and resets it.
-    pub fn take_inlines_collector(&mut self) -> Vec<Inline> {
+    pub fn take_inlines_collector(&mut self) -> Vec<Inline<'source>> {
         let mut inlines = Vec::new();
         std::mem::swap(&mut self.inlines_collector, &mut inlines);
         inlines
@@ -90,7 +98,7 @@ impl DocumentBuilder {
     }
 }
 
-impl Default for DocumentBuilder {
+impl Default for DocumentBuilder<'_> {
     fn default() -> Self {
         Self {
             scopes: vec![Vec::new()],

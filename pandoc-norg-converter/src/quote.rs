@@ -1,15 +1,18 @@
 use crate::ir::Block;
 use crate::Builder;
 
-pub(crate) struct QuoteBuilder<'a, 'builder, 'tree> {
-    builder: &'a mut Builder<'builder, 'tree>,
+pub(crate) struct QuoteBuilder<'a, 'builder, 'source> {
+    builder: &'a mut Builder<'builder, 'source>,
     // TODO: Try to work directly with the document scopes
-    blocks: [Vec<Block>; 6],
+    blocks: [Vec<Block<'source>>; 6],
     last_level: usize,
 }
 
-impl<'a, 'builder, 'tree> QuoteBuilder<'a, 'builder, 'tree> {
-    pub fn new(builder: &'a mut Builder<'builder, 'tree>) -> Self {
+impl<'a, 'builder, 'source> QuoteBuilder<'a, 'builder, 'source>
+where
+    'source: 'builder,
+{
+    pub fn new(builder: &'a mut Builder<'builder, 'source>) -> Self {
         Self {
             builder,
             blocks: Default::default(),
@@ -17,7 +20,7 @@ impl<'a, 'builder, 'tree> QuoteBuilder<'a, 'builder, 'tree> {
         }
     }
 
-    pub fn parse(mut self) -> Vec<Block> {
+    pub fn parse(mut self) -> Vec<Block<'source>> {
         loop {
             let node = self.builder.cursor.node();
 

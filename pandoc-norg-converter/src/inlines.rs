@@ -2,11 +2,14 @@ use crate::ir::Inline;
 use crate::Builder;
 use pandoc_types::definition::Target;
 
-impl<'builder, 'tree> Builder<'builder, 'tree> {
+impl<'builder, 'source> Builder<'builder, 'source>
+where
+    'source: 'builder,
+{
     /// Handles a paragraph segment element or any children of it.
     ///
     /// The processed items are added to the provided inlines vector and the function.
-    pub fn handle_segment(&mut self, inlines: &mut Vec<Inline>) {
+    pub fn handle_segment(&mut self, inlines: &mut Vec<Inline<'source>>) {
         let node = self.cursor.node();
 
         log::trace!("Parsing segment '{}'", node.kind());
@@ -52,7 +55,9 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                     inlines.push(Inline::Str(text));
                 });
             }
-            "link" => inlines.push(self.handle_link()),
+            "link" => inlines.push(self.handle_link(false)),
+            "anchor_declaration" => inlines.push(self.handle_link(true)),
+            "anchor_definition" => inlines.push(self.handle_link(true)),
             // Attached modifiers
             "bold" => inlines.push(Inline::Strong(self.handle_attached_modifier_content())),
             "underline" => inlines.push(Inline::Underline(self.handle_attached_modifier_content())),
@@ -78,7 +83,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         }
     }
 
-    fn handle_attached_modifier_content(&mut self) -> Vec<Inline> {
+    fn handle_attached_modifier_content(&mut self) -> Vec<Inline<'source>> {
         let mut inlines = Vec::new();
 
         self.visit_children(|this| {
@@ -113,9 +118,12 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         &self.source[start..end]
     }
 
-    fn handle_link(&mut self) -> Inline {
+    fn handle_link(&mut self, is_anchor: bool) -> Inline<'source> {
         let mut has_description = false;
         let mut text_inlines = Vec::new();
+
+        let mut anchor_name = "";
+        let mut has_url = false;
         let mut target = Target {
             url: String::new(),
             title: String::new(),
@@ -127,7 +135,10 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
             match node.kind() {
                 "link_description" => {
                     has_description = true;
-                    this.handle_link_description(&mut text_inlines)
+                    this.handle_link_description(&mut text_inlines);
+                    anchor_name = node
+                        .utf8_text(this.source.as_bytes())
+                        .expect("Invalid text");
                 }
                 "link_location" => {
                     match node.child_by_field_name("type").map(|node| node.kind()) {
@@ -143,19 +154,28 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
                             .expect("Invalid text")
                             .to_string();
                     }
+
+                    has_url = true;
                 }
                 link_child => log::error!("Unknown link child: {}", link_child),
             }
         });
 
+        if is_anchor && has_url {
+            self.document.add_anchor(anchor_name, target.url.clone());
+        }
+
         if !has_description {
             text_inlines.push(Inline::Str(target.url.clone()));
         }
 
-        Inline::Link(text_inlines, target)
+        match is_anchor {
+            true => Inline::Anchor(text_inlines, anchor_name),
+            false => Inline::Link(text_inlines, target),
+        }
     }
 
-    fn handle_link_description(&mut self, inlines: &mut Vec<Inline>) {
+    fn handle_link_description(&mut self, inlines: &mut Vec<Inline<'source>>) {
         self.visit_children(|this| {
             if this.cursor.field_id() != this.field_ids.text {
                 return;

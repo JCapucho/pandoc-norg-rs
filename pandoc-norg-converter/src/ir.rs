@@ -6,29 +6,29 @@ use pandoc_types::definition::{
 };
 
 #[derive(Debug)]
-pub enum Inline {
+pub enum Inline<'source> {
     Space,
     Str(String),
 
-    Emph(Vec<Inline>),
-    Strong(Vec<Inline>),
-    Underline(Vec<Inline>),
-    Strikeout(Vec<Inline>),
+    Emph(Vec<Inline<'source>>),
+    Strong(Vec<Inline<'source>>),
+    Underline(Vec<Inline<'source>>),
+    Strikeout(Vec<Inline<'source>>),
 
-    Subscript(Vec<Inline>),
-    Superscript(Vec<Inline>),
+    Subscript(Vec<Inline<'source>>),
+    Superscript(Vec<Inline<'source>>),
 
     Code(String),
     Math(String),
 
-    Link(Vec<Inline>, Target),
-    Anchor(Vec<Inline>, String),
+    Link(Vec<Inline<'source>>, Target),
+    Anchor(Vec<Inline<'source>>, &'source str),
 
     Image(Target),
 }
 
-impl Inline {
-    pub fn into_pandoc(self, anchors: &HashMap<String, String>) -> PandocInline {
+impl<'source> Inline<'source> {
+    pub fn into_pandoc(self, anchors: &HashMap<&str, String>) -> PandocInline {
         match self {
             Inline::Space => PandocInline::Space,
             Inline::Str(str) => PandocInline::Str(str),
@@ -59,7 +59,7 @@ impl Inline {
             ),
             Inline::Anchor(inlines, id) => {
                 let target = Target {
-                    url: anchors.get(&id).cloned().unwrap_or_default(),
+                    url: anchors.get(id).cloned().unwrap_or_default(),
                     title: String::new(),
                 };
                 PandocInline::Link(
@@ -76,40 +76,40 @@ impl Inline {
     }
 }
 
-type Row = Vec<Cell>;
-type ParagraphSegment = Vec<Inline>;
+type Row<'source> = Vec<Cell<'source>>;
+type ParagraphSegment<'source> = Vec<Inline<'source>>;
 
 #[derive(Debug)]
-pub struct Cell {
-    pub blocks: Vec<Block>,
+pub struct Cell<'source> {
+    pub blocks: Vec<Block<'source>>,
 }
 
 #[derive(Debug)]
-pub struct ListEntry {
-    pub blocks: Vec<Block>,
+pub struct ListEntry<'source> {
+    pub blocks: Vec<Block<'source>>,
 }
 
 #[derive(Debug)]
-pub enum Block {
+pub enum Block<'source> {
     Null,
 
-    Plain(ParagraphSegment),
-    Paragraph(Vec<ParagraphSegment>),
-    Header(i32, Attr, ParagraphSegment),
-    BlockQuote(Vec<Block>),
+    Plain(ParagraphSegment<'source>),
+    Paragraph(Vec<ParagraphSegment<'source>>),
+    Header(i32, Attr, ParagraphSegment<'source>),
+    BlockQuote(Vec<Block<'source>>),
 
     MathBlock(String),
     CodeBlock(Option<String>, String),
 
-    Table(usize, Row, Vec<Row>),
+    Table(usize, Row<'source>, Vec<Row<'source>>),
 
-    BulletList(Vec<ListEntry>),
-    OrderedList(Vec<ListEntry>),
-    DefinitionList(Vec<(ParagraphSegment, Vec<Block>)>),
+    BulletList(Vec<ListEntry<'source>>),
+    OrderedList(Vec<ListEntry<'source>>),
+    DefinitionList(Vec<(ParagraphSegment<'source>, Vec<Block<'source>>)>),
 }
 
-impl Block {
-    pub fn into_pandoc(self, anchors: &HashMap<String, String>) -> PandocBlock {
+impl<'source> Block<'source> {
+    pub fn into_pandoc(self, anchors: &HashMap<&str, String>) -> PandocBlock {
         match self {
             Block::Null => PandocBlock::Null,
             Block::Plain(segment) => {
@@ -218,7 +218,7 @@ impl Block {
 
 pub(crate) fn convert_inlines_to_pandoc(
     inlines: Vec<Inline>,
-    anchors: &HashMap<String, String>,
+    anchors: &HashMap<&str, String>,
 ) -> Vec<PandocInline> {
     inlines
         .into_iter()
@@ -228,7 +228,7 @@ pub(crate) fn convert_inlines_to_pandoc(
 
 pub(crate) fn convert_blocks_to_pandoc(
     blocks: Vec<Block>,
-    anchors: &HashMap<String, String>,
+    anchors: &HashMap<&str, String>,
 ) -> Vec<PandocBlock> {
     blocks
         .into_iter()

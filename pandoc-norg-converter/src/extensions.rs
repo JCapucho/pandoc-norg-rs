@@ -48,7 +48,7 @@ impl Default for TodoSymbols {
     }
 }
 
-impl<'builder, 'tree> Builder<'builder, 'tree> {
+impl<'builder, 'source> Builder<'builder, 'source> {
     pub fn handle_detached_ext(&mut self) {
         self.visit_children(|this| {
             let node = this.cursor.node();

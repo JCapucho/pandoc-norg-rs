@@ -1,7 +1,7 @@
 use crate::ir::Block;
 use crate::Builder;
 
-impl<'builder, 'tree> Builder<'builder, 'tree> {
+impl<'builder, 'source> Builder<'builder, 'source> {
     pub fn handle_definition_list(&mut self) {
         log::debug!("Parsing definition list");
 

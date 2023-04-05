@@ -25,16 +25,19 @@ enum ExitCondition {
 }
 
 /// The results of a call to [`Builder::build_lists_level`].
-struct BuildListsResult {
+struct BuildListsResult<'source> {
     /// The built list as a block.
-    block: Block,
+    block: Block<'source>,
     /// The type of list that was built.
     list_type: ListType,
     /// The reason why the build process stopped.
     exit: ExitCondition,
 }
 
-impl<'builder, 'tree> Builder<'builder, 'tree> {
+impl<'builder, 'source> Builder<'builder, 'source>
+where
+    'source: 'builder,
+{
     pub fn handle_lists(&mut self) {
         log::debug!("Parsing list");
 
@@ -54,7 +57,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         self.cursor.goto_parent();
     }
 
-    fn build_lists_level(&mut self, level: usize) -> BuildListsResult {
+    fn build_lists_level(&mut self, level: usize) -> BuildListsResult<'source> {
         let mut entries = Vec::new();
         let mut exit = ExitCondition::EndOfNodes;
         let mut list_type = ListType::Unknown;
@@ -129,7 +132,7 @@ impl<'builder, 'tree> Builder<'builder, 'tree> {
         }
     }
 
-    fn handle_list_content(&mut self, level: usize) -> ListEntry {
+    fn handle_list_content(&mut self, level: usize) -> ListEntry<'source> {
         self.document.push_scope();
 
         self.visit_children(|this| {
