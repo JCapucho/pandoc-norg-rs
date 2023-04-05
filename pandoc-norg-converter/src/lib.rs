@@ -22,7 +22,7 @@
 
 use std::collections::HashMap;
 
-use document::DocumentBuilder;
+use document::{DocumentBuilder, DocumentContext};
 use field_ids::FieldIds;
 use pandoc_types::definition::{Attr, Pandoc};
 use tree_sitter::TreeCursor;
@@ -41,6 +41,8 @@ mod quote;
 mod tags;
 
 pub use extensions::TodoSymbols;
+
+use crate::document::DocumentLinkType;
 
 #[derive(Default)]
 struct FrontendState {
@@ -122,15 +124,18 @@ impl Frontend {
         let mut builder = Builder {
             source,
             cursor: &mut cursor,
-            document: DocumentBuilder::default(),
+
             config: &self.config,
             frontend: &mut self.state,
             field_ids,
+
+            document: DocumentBuilder::default(),
+            context: DocumentContext::default(),
         };
 
         builder.handle_node();
 
-        builder.document.build()
+        builder.document.build(&builder.context)
     }
 }
 
@@ -151,10 +156,13 @@ where
 {
     source: &'source str,
     cursor: &'builder mut TreeCursor<'source>,
-    document: DocumentBuilder<'source>,
+
     config: &'source Config,
     frontend: &'source mut FrontendState,
     field_ids: FieldIds,
+
+    document: DocumentBuilder<'source>,
+    context: DocumentContext<'source>,
 }
 
 impl<'builder, 'source> Builder<'builder, 'source>
@@ -228,12 +236,16 @@ where
 
                 this.handle_segment(&mut inlines);
 
+                let text = &this.source[node.start_byte()..node.end_byte()];
+                let identifier = this.frontend.generate_id(text);
+                let url = format!("#{}", identifier);
                 let attr = Attr {
-                    identifier: this
-                        .frontend
-                        .generate_id(&this.source[node.start_byte()..node.end_byte()]),
+                    identifier,
                     ..Default::default()
                 };
+
+                this.context
+                    .add_document_link(text, DocumentLinkType::Heading(level), url);
 
                 this.document.add_block(Block::Header(level, attr, inlines));
             } else if this.cursor.field_id() == this.field_ids.state {

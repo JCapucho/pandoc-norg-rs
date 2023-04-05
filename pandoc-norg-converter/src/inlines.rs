@@ -1,4 +1,5 @@
-use crate::ir::Inline;
+use crate::document::DocumentLinkType;
+use crate::ir::{Inline, LinkType};
 use crate::Builder;
 
 impl<'builder, 'source> Builder<'builder, 'source>
@@ -121,9 +122,9 @@ where
         let mut has_description = false;
         let mut text_inlines = Vec::new();
 
-        let mut has_url = false;
         let mut anchor_name = "";
         let mut anchor_url = "";
+        let mut anchor_link = LinkType::None;
 
         self.visit_children(|this| {
             let node = this.cursor.node();
@@ -137,36 +138,60 @@ where
                         .expect("Invalid text");
                 }
                 "link_location" => {
-                    match node.child_by_field_name("type").map(|node| node.kind()) {
-                        Some("link_target_url") => {}
-                        Some("link_target_external_file") => {}
-                        Some(ty) => log::error!("Unknown link type: {}", ty),
-                        None => log::error!("Link with no type"),
-                    }
-
                     if let Some(text_node) = node.child_by_field_name("text") {
                         anchor_url = text_node
                             .utf8_text(this.source.as_bytes())
                             .expect("Invalid text");
                     }
 
-                    has_url = true;
+                    anchor_link = match node.child_by_field_name("type").map(|node| node.kind()) {
+                        Some("link_target_url") => LinkType::Href(anchor_url),
+                        Some("link_target_external_file") => LinkType::File(anchor_url),
+                        Some("link_target_heading1") => {
+                            LinkType::DocumentLink(DocumentLinkType::Heading(1), anchor_url)
+                        }
+                        Some("link_target_heading2") => {
+                            LinkType::DocumentLink(DocumentLinkType::Heading(2), anchor_url)
+                        }
+                        Some("link_target_heading3") => {
+                            LinkType::DocumentLink(DocumentLinkType::Heading(3), anchor_url)
+                        }
+                        Some("link_target_heading4") => {
+                            LinkType::DocumentLink(DocumentLinkType::Heading(4), anchor_url)
+                        }
+                        Some("link_target_heading5") => {
+                            LinkType::DocumentLink(DocumentLinkType::Heading(5), anchor_url)
+                        }
+                        Some("link_target_heading6") => {
+                            LinkType::DocumentLink(DocumentLinkType::Heading(6), anchor_url)
+                        }
+                        Some(ty) => {
+                            log::error!("Unknown link type: {}", ty);
+                            LinkType::None
+                        }
+                        None => {
+                            log::error!("Link with no type");
+                            LinkType::None
+                        }
+                    };
                 }
                 link_child => log::error!("Unknown link child: {}", link_child),
             }
         });
-
-        if is_anchor && has_url {
-            self.document.add_anchor(anchor_name, anchor_url);
-        }
 
         if !has_description {
             text_inlines.push(Inline::Str(anchor_url));
         }
 
         match is_anchor {
-            true => Inline::Anchor(text_inlines, anchor_name),
-            false => Inline::Link(text_inlines, anchor_url),
+            true => {
+                if LinkType::None != anchor_link {
+                    self.context.anchors.insert(anchor_name, anchor_link);
+                }
+
+                Inline::Anchor(text_inlines, anchor_name)
+            }
+            false => Inline::Link(text_inlines, anchor_link),
         }
     }
 

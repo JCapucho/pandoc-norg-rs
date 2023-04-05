@@ -1,9 +1,17 @@
-use std::collections::HashMap;
-
 use pandoc_types::definition::{
     Attr, Block as PandocBlock, Cell as PandocCell, ColSpec, Inline as PandocInline, MathType,
     Row as PandocRow, Table, TableBody, TableHead, Target,
 };
+
+use crate::document::{DocumentContext, DocumentLinkType};
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum LinkType<'source> {
+    None,
+    Href(&'source str),
+    File(&'source str),
+    DocumentLink(DocumentLinkType, &'source str),
+}
 
 #[derive(Debug)]
 pub enum Inline<'source> {
@@ -21,54 +29,63 @@ pub enum Inline<'source> {
     Code(&'source str),
     Math(&'source str),
 
-    Link(Vec<Inline<'source>>, &'source str),
+    Link(Vec<Inline<'source>>, LinkType<'source>),
     Anchor(Vec<Inline<'source>>, &'source str),
 
     Image(&'source str),
 }
 
 impl<'source> Inline<'source> {
-    pub fn into_pandoc(self, anchors: &HashMap<&str, &str>) -> PandocInline {
+    pub fn into_pandoc(self, context: &DocumentContext) -> PandocInline {
         match self {
             Inline::Space => PandocInline::Space,
             Inline::Str(str) => PandocInline::Str(str.to_string()),
             Inline::Emph(inlines) => {
-                PandocInline::Emph(convert_inlines_to_pandoc(inlines, anchors))
+                PandocInline::Emph(convert_inlines_to_pandoc(inlines, context))
             }
             Inline::Strong(inlines) => {
-                PandocInline::Strong(convert_inlines_to_pandoc(inlines, anchors))
+                PandocInline::Strong(convert_inlines_to_pandoc(inlines, context))
             }
             Inline::Underline(inlines) => {
-                PandocInline::Underline(convert_inlines_to_pandoc(inlines, anchors))
+                PandocInline::Underline(convert_inlines_to_pandoc(inlines, context))
             }
             Inline::Strikeout(inlines) => {
-                PandocInline::Strikeout(convert_inlines_to_pandoc(inlines, anchors))
+                PandocInline::Strikeout(convert_inlines_to_pandoc(inlines, context))
             }
             Inline::Subscript(inlines) => {
-                PandocInline::Subscript(convert_inlines_to_pandoc(inlines, anchors))
+                PandocInline::Subscript(convert_inlines_to_pandoc(inlines, context))
             }
             Inline::Superscript(inlines) => {
-                PandocInline::Superscript(convert_inlines_to_pandoc(inlines, anchors))
+                PandocInline::Superscript(convert_inlines_to_pandoc(inlines, context))
             }
             Inline::Code(str) => PandocInline::Code(Attr::default(), str.to_string()),
             Inline::Math(str) => PandocInline::Math(MathType::InlineMath, str.to_string()),
-            Inline::Link(inlines, url) => PandocInline::Link(
-                Attr::default(),
-                convert_inlines_to_pandoc(inlines, anchors),
-                Target {
-                    url: url.to_string(),
-                    title: String::new(),
-                },
-            ),
-            Inline::Anchor(inlines, id) => {
-                let target = Target {
-                    url: anchors.get(id).unwrap_or_else(|| &"").to_string(),
-                    title: String::new(),
-                };
+            Inline::Link(inlines, ty) => {
+                let url = get_link_url(&ty, context);
+
                 PandocInline::Link(
                     Attr::default(),
-                    convert_inlines_to_pandoc(inlines, anchors),
-                    target,
+                    convert_inlines_to_pandoc(inlines, context),
+                    Target {
+                        url,
+                        title: String::new(),
+                    },
+                )
+            }
+            Inline::Anchor(inlines, id) => {
+                let url = context
+                    .anchors
+                    .get(id)
+                    .map(|ty| get_link_url(ty, context))
+                    .unwrap_or_default();
+
+                PandocInline::Link(
+                    Attr::default(),
+                    convert_inlines_to_pandoc(inlines, context),
+                    Target {
+                        url,
+                        title: String::new(),
+                    },
                 )
             }
             Inline::Image(url) => {
@@ -82,6 +99,23 @@ impl<'source> Inline<'source> {
                     },
                 )
             }
+        }
+    }
+}
+
+fn get_link_url(ty: &LinkType, context: &DocumentContext) -> String {
+    match *ty {
+        LinkType::None => String::new(),
+        LinkType::Href(url) => url.to_string(),
+        LinkType::File(url) => url.to_string(),
+        LinkType::DocumentLink(ref ty, text) => {
+            let res = context.get_document_link(text, ty).cloned();
+
+            if res.is_none() {
+                log::warn!("Missing document link for {}", text);
+            }
+
+            res.unwrap_or_default()
         }
     }
 }
@@ -119,11 +153,11 @@ pub enum Block<'source> {
 }
 
 impl<'source> Block<'source> {
-    pub fn into_pandoc(self, anchors: &HashMap<&str, &str>) -> PandocBlock {
+    pub fn into_pandoc(self, context: &DocumentContext) -> PandocBlock {
         match self {
             Block::Null => PandocBlock::Null,
             Block::Plain(segment) => {
-                let inlines = convert_inlines_to_pandoc(segment, anchors);
+                let inlines = convert_inlines_to_pandoc(segment, context);
 
                 PandocBlock::Plain(inlines)
             }
@@ -132,23 +166,23 @@ impl<'source> Block<'source> {
                 let mut segments = segments.into_iter();
 
                 if let Some(segment) = segments.next() {
-                    inlines.extend(convert_inlines_to_pandoc(segment, anchors));
+                    inlines.extend(convert_inlines_to_pandoc(segment, context));
                 }
 
                 for segment in segments {
                     inlines.push(PandocInline::Space);
-                    inlines.extend(convert_inlines_to_pandoc(segment, anchors));
+                    inlines.extend(convert_inlines_to_pandoc(segment, context));
                 }
 
                 PandocBlock::Para(inlines)
             }
             Block::Header(level, attr, segment) => {
-                let inlines = convert_inlines_to_pandoc(segment, anchors);
+                let inlines = convert_inlines_to_pandoc(segment, context);
 
                 PandocBlock::Header(level, attr, inlines)
             }
             Block::BlockQuote(blocks) => {
-                let blocks = convert_blocks_to_pandoc(blocks, anchors);
+                let blocks = convert_blocks_to_pandoc(blocks, context);
                 PandocBlock::BlockQuote(blocks)
             }
             Block::CodeBlock(language, code) => {
@@ -166,7 +200,7 @@ impl<'source> Block<'source> {
                     let cells = row
                         .into_iter()
                         .map(|cell| PandocCell {
-                            content: convert_blocks_to_pandoc(cell.blocks, anchors),
+                            content: convert_blocks_to_pandoc(cell.blocks, context),
                             ..Default::default()
                         })
                         .collect();
@@ -195,7 +229,7 @@ impl<'source> Block<'source> {
             Block::BulletList(entries) => {
                 let entries = entries
                     .into_iter()
-                    .map(|entry| convert_blocks_to_pandoc(entry.blocks, anchors))
+                    .map(|entry| convert_blocks_to_pandoc(entry.blocks, context))
                     .collect();
 
                 PandocBlock::BulletList(entries)
@@ -203,7 +237,7 @@ impl<'source> Block<'source> {
             Block::OrderedList(entries) => {
                 let entries = entries
                     .into_iter()
-                    .map(|entry| convert_blocks_to_pandoc(entry.blocks, anchors))
+                    .map(|entry| convert_blocks_to_pandoc(entry.blocks, context))
                     .collect();
 
                 PandocBlock::OrderedList(Default::default(), entries)
@@ -212,9 +246,9 @@ impl<'source> Block<'source> {
                 let entries = entries
                     .into_iter()
                     .map(|(segment, blocks)| {
-                        let inlines = convert_inlines_to_pandoc(segment, anchors);
+                        let inlines = convert_inlines_to_pandoc(segment, context);
 
-                        let blocks = convert_blocks_to_pandoc(blocks, anchors);
+                        let blocks = convert_blocks_to_pandoc(blocks, context);
 
                         (inlines, vec![blocks])
                     })
@@ -228,20 +262,20 @@ impl<'source> Block<'source> {
 
 pub(crate) fn convert_inlines_to_pandoc(
     inlines: Vec<Inline>,
-    anchors: &HashMap<&str, &str>,
+    context: &DocumentContext,
 ) -> Vec<PandocInline> {
     inlines
         .into_iter()
-        .map(|inline| inline.into_pandoc(&anchors))
+        .map(|inline| inline.into_pandoc(context))
         .collect()
 }
 
 pub(crate) fn convert_blocks_to_pandoc(
     blocks: Vec<Block>,
-    anchors: &HashMap<&str, &str>,
+    context: &DocumentContext,
 ) -> Vec<PandocBlock> {
     blocks
         .into_iter()
-        .map(|block| block.into_pandoc(&anchors))
+        .map(|block| block.into_pandoc(context))
         .collect()
 }

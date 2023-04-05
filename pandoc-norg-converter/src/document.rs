@@ -1,6 +1,32 @@
-use crate::ir::{convert_blocks_to_pandoc, convert_inlines_to_pandoc, Block, Inline};
+use crate::ir::{convert_blocks_to_pandoc, convert_inlines_to_pandoc, Block, Inline, LinkType};
 use pandoc_types::definition::{Block as PandocBlock, MetaValue, Pandoc};
 use std::collections::HashMap;
+
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub enum DocumentLinkType {
+    Heading(i32),
+}
+
+#[derive(Default)]
+pub struct DocumentContext<'source> {
+    pub anchors: HashMap<&'source str, LinkType<'source>>,
+    document_links: HashMap<&'source str, HashMap<DocumentLinkType, String>>,
+}
+
+impl<'source> DocumentContext<'source> {
+    pub fn add_document_link(&mut self, text: &'source str, ty: DocumentLinkType, id: String) {
+        let entry = self.document_links.entry(text);
+        let ty_map = entry.or_default();
+        ty_map.insert(ty, id);
+    }
+
+    pub fn get_document_link(&self, text: &'source str, ty: &DocumentLinkType) -> Option<&String> {
+        let ty_map = self.document_links.get(text)?;
+        let res = ty_map.get(ty);
+        log::debug!("Fetching link for {} (ty: {:?}) = {:?}", text, ty, res);
+        res
+    }
+}
 
 /// Interface for building pandoc documents.
 ///
@@ -10,7 +36,6 @@ pub struct DocumentBuilder<'source> {
     scopes: Vec<Vec<Block<'source>>>,
     metadata: HashMap<String, MetaValue>,
     inlines_collector: Vec<Inline<'source>>,
-    anchors: HashMap<&'source str, &'source str>,
 }
 
 impl<'source> DocumentBuilder<'source> {
@@ -50,14 +75,6 @@ impl<'source> DocumentBuilder<'source> {
         self.metadata.extend(meta);
     }
 
-    /// Adds a new anchor definition
-    ///
-    /// If the anchor name was already added the value is replaced
-    pub fn add_anchor(&mut self, name: &'source str, url: &'source str) {
-        log::debug!("Registering anchor for {} (url: {})", name, url);
-        self.anchors.insert(name, url);
-    }
-
     /// Adds an inline to the collector.
     ///
     /// The collector stores inlines until either [`take_inlines_collector`] is called or a new
@@ -79,18 +96,18 @@ impl<'source> DocumentBuilder<'source> {
     }
 
     /// Returns the built document.
-    pub fn build(mut self) -> Pandoc {
+    pub fn build(mut self, context: &DocumentContext) -> Pandoc {
         debug_assert_eq!(self.scopes.len(), 1, "Only the root scope should remain");
         let root_scope = self.scopes.remove(0);
 
         let mut pandoc = Pandoc {
             meta: self.metadata,
-            blocks: convert_blocks_to_pandoc(root_scope, &self.anchors),
+            blocks: convert_blocks_to_pandoc(root_scope, context),
         };
 
         // Flush the inlines collector
         if !self.inlines_collector.is_empty() {
-            let inlines = convert_inlines_to_pandoc(self.inlines_collector, &self.anchors);
+            let inlines = convert_inlines_to_pandoc(self.inlines_collector, context);
             pandoc.blocks.push(PandocBlock::Plain(inlines));
         }
 
@@ -104,7 +121,6 @@ impl Default for DocumentBuilder<'_> {
             scopes: vec![Vec::new()],
             metadata: Default::default(),
             inlines_collector: Default::default(),
-            anchors: Default::default(),
         }
     }
 }
