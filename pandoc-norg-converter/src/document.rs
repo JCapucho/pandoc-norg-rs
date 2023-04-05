@@ -10,7 +10,7 @@ pub struct DocumentBuilder<'source> {
     scopes: Vec<Vec<Block<'source>>>,
     metadata: HashMap<String, MetaValue>,
     inlines_collector: Vec<Inline<'source>>,
-    anchors: HashMap<&'source str, String>,
+    anchors: HashMap<&'source str, &'source str>,
 }
 
 impl<'source> DocumentBuilder<'source> {
@@ -53,7 +53,7 @@ impl<'source> DocumentBuilder<'source> {
     /// Adds a new anchor definition
     ///
     /// If the anchor name was already added the value is replaced
-    pub fn add_anchor(&mut self, name: &'source str, url: String) {
+    pub fn add_anchor(&mut self, name: &'source str, url: &'source str) {
         log::debug!("Registering anchor for {} (url: {})", name, url);
         self.anchors.insert(name, url);
     }

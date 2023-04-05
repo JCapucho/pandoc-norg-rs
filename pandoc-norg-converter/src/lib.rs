@@ -42,60 +42,12 @@ mod tags;
 
 pub use extensions::TodoSymbols;
 
-/// The `Frontend` is the central structure of the converter.
-///
-/// To start using a `Frontend` first create an instance of it by calling [`Frontend::default`],
-/// this will use a default configuration, in order to use a custom [`Config`] use [`Frontend::new`].
-///
-/// Then to convert to the pandoc representation, call [`convert`] on the `Frontend`, this will
-/// output a type that can be serialized with `serde`.
-///
-/// The same `Frontend` instance should be used for many neorg documents if they all belong to the
-/// same pandoc document, for example if generating an html document by including the result of
-/// many neorg documents and stitching them together, this is because the `Frontend` keeps track of
-/// some information in order to ensure for example unique identifiers between the processed files.
-///
-/// [`&str`]: str
-/// [`convert`]: Frontend::convert
 #[derive(Default)]
-pub struct Frontend {
-    config: Config,
+struct FrontendState {
     identifiers: HashMap<String, u32>,
 }
 
-impl Frontend {
-    /// Creates a new `Frontend` with the provided configuration.
-    pub fn new(config: Config) -> Self {
-        Frontend {
-            config,
-            ..Default::default()
-        }
-    }
-
-    /// Converts the passed neorg source code to it's pandoc representation.
-    pub fn convert(&mut self, source: &str) -> Pandoc {
-        let mut parser = tree_sitter::Parser::new();
-        parser
-            .set_language(tree_sitter_norg::language())
-            .expect("Failed to load tree sitter grammar");
-
-        let tree = parser.parse(source, None).expect("Failed to parse file");
-        let field_ids = FieldIds::new(&tree);
-        let mut cursor = tree.walk();
-
-        let mut builder = Builder {
-            source,
-            cursor: &mut cursor,
-            document: DocumentBuilder::default(),
-            frontend: self,
-            field_ids,
-        };
-
-        builder.handle_node();
-
-        builder.document.build()
-    }
-
+impl FrontendState {
     /// Generates an unique (for a given `Frontend` instance) string that's a
     /// valid HTML5 `id` attribute value from the passed text.
     fn generate_id(&mut self, text: &str) -> String {
@@ -126,6 +78,62 @@ impl Frontend {
     }
 }
 
+/// The `Frontend` is the central structure of the converter.
+///
+/// To start using a `Frontend` first create an instance of it by calling [`Frontend::default`],
+/// this will use a default configuration, in order to use a custom [`Config`] use [`Frontend::new`].
+///
+/// Then to convert to the pandoc representation, call [`convert`] on the `Frontend`, this will
+/// output a type that can be serialized with `serde`.
+///
+/// The same `Frontend` instance should be used for many neorg documents if they all belong to the
+/// same pandoc document, for example if generating an html document by including the result of
+/// many neorg documents and stitching them together, this is because the `Frontend` keeps track of
+/// some information in order to ensure for example unique identifiers between the processed files.
+///
+/// [`&str`]: str
+/// [`convert`]: Frontend::convert
+#[derive(Default)]
+pub struct Frontend {
+    config: Config,
+    state: FrontendState,
+}
+
+impl Frontend {
+    /// Creates a new `Frontend` with the provided configuration.
+    pub fn new(config: Config) -> Self {
+        Frontend {
+            config,
+            ..Default::default()
+        }
+    }
+
+    /// Converts the passed neorg source code to it's pandoc representation.
+    pub fn convert(&mut self, source: &str) -> Pandoc {
+        let mut parser = tree_sitter::Parser::new();
+        parser
+            .set_language(tree_sitter_norg::language())
+            .expect("Failed to load tree sitter grammar");
+
+        let tree = parser.parse(source, None).expect("Failed to parse file");
+        let field_ids = FieldIds::new(&tree);
+        let mut cursor = tree.walk();
+
+        let mut builder = Builder {
+            source,
+            cursor: &mut cursor,
+            document: DocumentBuilder::default(),
+            config: &self.config,
+            frontend: &mut self.state,
+            field_ids,
+        };
+
+        builder.handle_node();
+
+        builder.document.build()
+    }
+}
+
 /// Holds the configuration used by a [`Frontend`].
 ///
 /// A default configuration can be generated using the [`default`] function.
@@ -144,7 +152,8 @@ where
     source: &'source str,
     cursor: &'builder mut TreeCursor<'source>,
     document: DocumentBuilder<'source>,
-    frontend: &'source mut Frontend,
+    config: &'source Config,
+    frontend: &'source mut FrontendState,
     field_ids: FieldIds,
 }
 

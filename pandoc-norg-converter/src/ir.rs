@@ -8,7 +8,7 @@ use pandoc_types::definition::{
 #[derive(Debug)]
 pub enum Inline<'source> {
     Space,
-    Str(String),
+    Str(&'source str),
 
     Emph(Vec<Inline<'source>>),
     Strong(Vec<Inline<'source>>),
@@ -18,20 +18,20 @@ pub enum Inline<'source> {
     Subscript(Vec<Inline<'source>>),
     Superscript(Vec<Inline<'source>>),
 
-    Code(String),
-    Math(String),
+    Code(&'source str),
+    Math(&'source str),
 
-    Link(Vec<Inline<'source>>, Target),
+    Link(Vec<Inline<'source>>, &'source str),
     Anchor(Vec<Inline<'source>>, &'source str),
 
-    Image(Target),
+    Image(&'source str),
 }
 
 impl<'source> Inline<'source> {
-    pub fn into_pandoc(self, anchors: &HashMap<&str, String>) -> PandocInline {
+    pub fn into_pandoc(self, anchors: &HashMap<&str, &str>) -> PandocInline {
         match self {
             Inline::Space => PandocInline::Space,
-            Inline::Str(str) => PandocInline::Str(str),
+            Inline::Str(str) => PandocInline::Str(str.to_string()),
             Inline::Emph(inlines) => {
                 PandocInline::Emph(convert_inlines_to_pandoc(inlines, anchors))
             }
@@ -50,16 +50,19 @@ impl<'source> Inline<'source> {
             Inline::Superscript(inlines) => {
                 PandocInline::Superscript(convert_inlines_to_pandoc(inlines, anchors))
             }
-            Inline::Code(str) => PandocInline::Code(Attr::default(), str),
-            Inline::Math(str) => PandocInline::Math(MathType::InlineMath, str),
-            Inline::Link(inlines, target) => PandocInline::Link(
+            Inline::Code(str) => PandocInline::Code(Attr::default(), str.to_string()),
+            Inline::Math(str) => PandocInline::Math(MathType::InlineMath, str.to_string()),
+            Inline::Link(inlines, url) => PandocInline::Link(
                 Attr::default(),
                 convert_inlines_to_pandoc(inlines, anchors),
-                target,
+                Target {
+                    url: url.to_string(),
+                    title: String::new(),
+                },
             ),
             Inline::Anchor(inlines, id) => {
                 let target = Target {
-                    url: anchors.get(id).cloned().unwrap_or_default(),
+                    url: anchors.get(id).unwrap_or_else(|| &"").to_string(),
                     title: String::new(),
                 };
                 PandocInline::Link(
@@ -68,9 +71,16 @@ impl<'source> Inline<'source> {
                     target,
                 )
             }
-            Inline::Image(target) => {
+            Inline::Image(url) => {
                 let attr = Attr::default();
-                PandocInline::Image(attr, Vec::new(), target)
+                PandocInline::Image(
+                    attr,
+                    Vec::new(),
+                    Target {
+                        url: url.to_string(),
+                        title: String::new(),
+                    },
+                )
             }
         }
     }
@@ -99,7 +109,7 @@ pub enum Block<'source> {
     BlockQuote(Vec<Block<'source>>),
 
     MathBlock(String),
-    CodeBlock(Option<String>, String),
+    CodeBlock(Option<&'source str>, String),
 
     Table(usize, Row<'source>, Vec<Row<'source>>),
 
@@ -109,7 +119,7 @@ pub enum Block<'source> {
 }
 
 impl<'source> Block<'source> {
-    pub fn into_pandoc(self, anchors: &HashMap<&str, String>) -> PandocBlock {
+    pub fn into_pandoc(self, anchors: &HashMap<&str, &str>) -> PandocBlock {
         match self {
             Block::Null => PandocBlock::Null,
             Block::Plain(segment) => {
@@ -143,7 +153,7 @@ impl<'source> Block<'source> {
             }
             Block::CodeBlock(language, code) => {
                 let attr = Attr {
-                    classes: language.into_iter().collect(),
+                    classes: language.into_iter().map(ToString::to_string).collect(),
                     ..Default::default()
                 };
                 PandocBlock::CodeBlock(attr, code)
@@ -218,7 +228,7 @@ impl<'source> Block<'source> {
 
 pub(crate) fn convert_inlines_to_pandoc(
     inlines: Vec<Inline>,
-    anchors: &HashMap<&str, String>,
+    anchors: &HashMap<&str, &str>,
 ) -> Vec<PandocInline> {
     inlines
         .into_iter()
@@ -228,7 +238,7 @@ pub(crate) fn convert_inlines_to_pandoc(
 
 pub(crate) fn convert_blocks_to_pandoc(
     blocks: Vec<Block>,
-    anchors: &HashMap<&str, String>,
+    anchors: &HashMap<&str, &str>,
 ) -> Vec<PandocBlock> {
     blocks
         .into_iter()

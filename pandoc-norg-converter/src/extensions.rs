@@ -48,7 +48,10 @@ impl Default for TodoSymbols {
     }
 }
 
-impl<'builder, 'source> Builder<'builder, 'source> {
+impl<'builder, 'source> Builder<'builder, 'source>
+where
+    'source: 'builder,
+{
     pub fn handle_detached_ext(&mut self) {
         self.visit_children(|this| {
             let node = this.cursor.node();
@@ -69,21 +72,17 @@ impl<'builder, 'source> Builder<'builder, 'source> {
         });
     }
 
-    fn todo_symbols(&self) -> &TodoSymbols {
-        &self.frontend.config.todo_symbols
-    }
-
     fn add_todo_status(&mut self, status: &str) {
-        let todo_symbols = self.todo_symbols();
+        let todo_symbols = &self.config.todo_symbols;
         let icon = match status {
-            "todo_item_cancelled" => todo_symbols.cancelled.clone(),
-            "todo_item_done" => todo_symbols.done.clone(),
-            "todo_item_on_hold" => todo_symbols.on_hold.clone(),
-            "todo_item_pending" => todo_symbols.pending.clone(),
-            "todo_item_recurring" => todo_symbols.recurring.clone(),
-            "todo_item_uncertain" => todo_symbols.uncertain.clone(),
-            "todo_item_undone" => todo_symbols.undone.clone(),
-            "todo_item_urgent" => todo_symbols.urgent.clone(),
+            "todo_item_cancelled" => todo_symbols.cancelled.as_str(),
+            "todo_item_done" => todo_symbols.done.as_str(),
+            "todo_item_on_hold" => todo_symbols.on_hold.as_str(),
+            "todo_item_pending" => todo_symbols.pending.as_str(),
+            "todo_item_recurring" => todo_symbols.recurring.as_str(),
+            "todo_item_uncertain" => todo_symbols.uncertain.as_str(),
+            "todo_item_undone" => todo_symbols.undone.as_str(),
+            "todo_item_urgent" => todo_symbols.urgent.as_str(),
             status => return log::error!("Unknown todo status: {status}"),
         };
 

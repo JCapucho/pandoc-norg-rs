@@ -1,6 +1,5 @@
 use crate::ir::{Block, Cell, Inline};
 use crate::Builder;
-use pandoc_types::definition::Target;
 
 impl<'builder, 'source> Builder<'builder, 'source>
 where
@@ -98,10 +97,10 @@ where
 
         let content = self.code_content();
         self.document
-            .add_block(Block::CodeBlock(Some(String::from("norg")), content))
+            .add_block(Block::CodeBlock(Some("norg"), content))
     }
 
-    fn handle_code_block(&mut self, parameters: &[&str]) {
+    fn handle_code_block(&mut self, parameters: &[&'source str]) {
         log::debug!("Parsing code block");
 
         if parameters.len() > 1 {
@@ -113,7 +112,7 @@ where
         }
 
         let content = self.code_content();
-        let language = parameters.get(0).map(ToString::to_string);
+        let language = parameters.get(0).map(|s| *s);
         self.document.add_block(Block::CodeBlock(language, content))
     }
 
@@ -195,11 +194,7 @@ where
 
         match parameters.first().copied() {
             Some("image") => {
-                let target = Target {
-                    title: String::new(),
-                    url: text.to_string(),
-                };
-                let segment = vec![Inline::Image(target)];
+                let segment = vec![Inline::Image(text)];
                 self.document.add_block(Block::Plain(segment));
             }
             Some(kind) => log::error!("Unknown embed type: {}", kind),
@@ -226,13 +221,13 @@ where
 
         let mut cols = 0;
 
-        let mut parse_row = |line: &str| {
+        let mut parse_row = |line: &'source str| {
             let mut row = Vec::new();
 
             for col in line.split('|') {
                 let content = col.trim();
                 row.push(Cell {
-                    blocks: vec![Block::Plain(vec![Inline::Str(content.to_string())])],
+                    blocks: vec![Block::Plain(vec![Inline::Str(content)])],
                 });
             }
 

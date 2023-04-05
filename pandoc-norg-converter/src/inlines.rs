@@ -1,6 +1,5 @@
 use crate::ir::Inline;
 use crate::Builder;
-use pandoc_types::definition::Target;
 
 impl<'builder, 'source> Builder<'builder, 'source>
 where
@@ -23,8 +22,7 @@ where
             "_word" => {
                 let text = node
                     .utf8_text(self.source.as_bytes())
-                    .expect("Invalid text")
-                    .to_string();
+                    .expect("Invalid text");
                 inlines.push(Inline::Str(text));
             }
             "_space" => inlines.push(Inline::Space),
@@ -49,8 +47,7 @@ where
                         .cursor
                         .node()
                         .utf8_text(this.source.as_bytes())
-                        .expect("Invalid text")
-                        .to_string();
+                        .expect("Invalid text");
 
                     inlines.push(Inline::Str(text));
                 });
@@ -71,11 +68,11 @@ where
             "subscript" => inlines.push(Inline::Subscript(self.handle_attached_modifier_content())),
             "verbatim" => {
                 let text = self.get_delimited_modifier_text();
-                inlines.push(Inline::Code(text.to_string()))
+                inlines.push(Inline::Code(text))
             }
             "inline_math" => {
                 let text = self.get_delimited_modifier_text();
-                inlines.push(Inline::Math(text.to_string()))
+                inlines.push(Inline::Math(text))
             }
             kind => {
                 log::error!("Unknown segment: {:?}", kind);
@@ -98,7 +95,7 @@ where
         inlines
     }
 
-    fn get_delimited_modifier_text(&mut self) -> &str {
+    fn get_delimited_modifier_text(&mut self) -> &'source str {
         let node = self.cursor.node();
         let mut start = node.start_byte();
         let mut end = node.end_byte();
@@ -122,12 +119,9 @@ where
         let mut has_description = false;
         let mut text_inlines = Vec::new();
 
-        let mut anchor_name = "";
         let mut has_url = false;
-        let mut target = Target {
-            url: String::new(),
-            title: String::new(),
-        };
+        let mut anchor_name = "";
+        let mut anchor_url = "";
 
         self.visit_children(|this| {
             let node = this.cursor.node();
@@ -149,10 +143,9 @@ where
                     }
 
                     if let Some(text_node) = node.child_by_field_name("text") {
-                        target.url = text_node
+                        anchor_url = text_node
                             .utf8_text(this.source.as_bytes())
-                            .expect("Invalid text")
-                            .to_string();
+                            .expect("Invalid text");
                     }
 
                     has_url = true;
@@ -162,16 +155,16 @@ where
         });
 
         if is_anchor && has_url {
-            self.document.add_anchor(anchor_name, target.url.clone());
+            self.document.add_anchor(anchor_name, anchor_url);
         }
 
         if !has_description {
-            text_inlines.push(Inline::Str(target.url.clone()));
+            text_inlines.push(Inline::Str(anchor_url));
         }
 
         match is_anchor {
             true => Inline::Anchor(text_inlines, anchor_name),
-            false => Inline::Link(text_inlines, target),
+            false => Inline::Link(text_inlines, anchor_url),
         }
     }
 
