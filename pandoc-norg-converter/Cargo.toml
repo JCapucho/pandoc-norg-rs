@@ -5,7 +5,7 @@ edition = "2021"
 license = "LGPL-3.0-or-later"
 
 [dependencies]
-pandoc_types = "0.5"
+pandoc_types = "0.6"
 tree-sitter = "0.20"
 tree-sitter-norg = { git = "https://github.com/nvim-neorg/tree-sitter-norg.git", rev = "1a305093569632de50f9a316ff843dcda25b4ef5" }
 log = "0.4"
