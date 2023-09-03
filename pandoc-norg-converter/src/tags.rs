@@ -194,7 +194,7 @@ where
 
         match parameters.first().copied() {
             Some("image") => {
-                let segment = vec![Inline::Image(text)];
+                let segment = vec![Inline::Image(text.trim())];
                 self.document.add_block(Block::Plain(segment));
             }
             Some(kind) => log::error!("Unknown embed type: {}", kind),

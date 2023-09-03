@@ -8,8 +8,7 @@ This is an example tag
 fn rust_code_block() {}
 ```
 
-![](https://raw.githubusercontent.com/nvim-neorg/neorg/main/res/neorg.svg
-)
+![](https://raw.githubusercontent.com/nvim-neorg/neorg/main/res/neorg.svg)
 
 $$\text{Block math}
 $$
