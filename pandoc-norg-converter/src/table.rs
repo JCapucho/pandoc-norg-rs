@@ -14,6 +14,7 @@ impl<'builder, 'source> Builder<'builder, 'source> {
     pub fn handle_table(&mut self) {
         log::debug!("Parsing table");
 
+        let mut head = Vec::new();
         let mut rows = Vec::new();
         let mut num_cols = 0;
 
@@ -24,11 +25,17 @@ impl<'builder, 'source> Builder<'builder, 'source> {
                 "single_table_cell" => {
                     let (row_idx, col_idx, cell) = this.handle_single_cell();
 
-                    while rows.len() <= row_idx {
-                        rows.push(Vec::new());
+                    if row_idx != 0 {
+                        while rows.len() < row_idx {
+                            rows.push(Vec::new());
+                        }
                     }
 
-                    let row = &mut rows[row_idx];
+                    let row = if row_idx == 0 {
+                        &mut head
+                    } else {
+                        &mut rows[row_idx - 1]
+                    };
 
                     while row.len() <= col_idx {
                         row.push(Cell { blocks: Vec::new() });
@@ -42,8 +49,7 @@ impl<'builder, 'source> Builder<'builder, 'source> {
             }
         });
 
-        self.document
-            .add_block(Block::Table(num_cols, Vec::new(), rows))
+        self.document.add_block(Block::Table(num_cols, head, rows))
     }
 
     fn handle_single_cell(&mut self) -> (usize, usize, Cell<'source>) {
