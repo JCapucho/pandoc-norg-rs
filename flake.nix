@@ -22,14 +22,13 @@
         crateName = "pandoc-norg-rs";
         crateOutputs = config.nci.outputs.${crateName};
       in {
-        nci.projects.${crateName}.relPath = "";
+        nci.projects.${crateName}.path = ./.;
         # configure crates
+        nci.crates."pandoc-norg-converter" = {};
         nci.crates.${crateName} = {
           export = true;
-          overrides = {
-            add-tests-inputs.overrideAttrs = old: {
-              buildInputs = (old.buildInputs or []) ++ [pkgs.pandoc];
-            };
+          drvConfig.mkDerivation = {
+            buildInputs = [pkgs.pandoc];
           };
         };
         devShells.default = crateOutputs.devShell.overrideAttrs (old: let
