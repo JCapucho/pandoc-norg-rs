@@ -38,6 +38,7 @@ mod ir;
 mod lists;
 mod meta;
 mod quote;
+mod table;
 mod tags;
 
 pub use extensions::TodoSymbols;
@@ -191,6 +192,7 @@ where
             "generic_list" => self.handle_lists(),
 
             "definition_list" => self.handle_definition_list(),
+            "table" => self.handle_table(),
             kind => {
                 log::error!("Unknown node: {:?}", kind)
             }
